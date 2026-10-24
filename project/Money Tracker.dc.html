@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="light"]{--desk:oklch(0.93 0.006 250);--bg:oklch(0.982 0.004 250);--surface:oklch(1 0 0);--surface2:oklch(0.962 0.005 250);--line:oklch(0.91 0.007 250);--ink:oklch(0.23 0.018 260);--ink2:oklch(0.44 0.016 260);--ink3:oklch(0.56 0.012 260);--salary:oklch(0.5 0.15 268);--salary-soft:oklch(0.95 0.025 268);--savings:oklch(0.52 0.1 192);--savings-soft:oklch(0.95 0.025 192);--income:oklch(0.52 0.13 150);--income-soft:oklch(0.95 0.035 150);--expense:oklch(0.55 0.17 28);--expense-soft:oklch(0.955 0.03 28);--warn:oklch(0.7 0.14 72);--warn-soft:oklch(0.965 0.04 85);--on-accent:oklch(0.99 0.003 260);--scrim:oklch(0.2 0.02 260 / 0.38)}
+[data-theme="dark"]{--desk:oklch(0.12 0.008 260);--bg:oklch(0.17 0.01 260);--surface:oklch(0.215 0.012 260);--surface2:oklch(0.255 0.013 260);--line:oklch(0.3 0.013 260);--ink:oklch(0.95 0.006 260);--ink2:oklch(0.78 0.01 260);--ink3:oklch(0.64 0.012 260);--salary:oklch(0.75 0.12 268);--salary-soft:oklch(0.3 0.06 268);--savings:oklch(0.78 0.1 192);--savings-soft:oklch(0.3 0.045 192);--income:oklch(0.78 0.14 150);--income-soft:oklch(0.3 0.05 150);--expense:oklch(0.74 0.14 28);--expense-soft:oklch(0.3 0.05 28);--warn:oklch(0.82 0.13 78);--warn-soft:oklch(0.32 0.05 78);--on-accent:oklch(0.17 0.02 268);--scrim:oklch(0 0 0 / 0.55)}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+input::placeholder{color:var(--ink3)}
+[data-hscroll]::-webkit-scrollbar{display:none}
+a{color:var(--salary)}a:hover{color:var(--ink)}
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="min-height:100vh;background:var(--desk);color:var(--ink);font-variant-numeric:tabular-nums;display:flex;flex-direction:column;align-items:center;padding:20px 16px 48px;gap:20px">
+
+  <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:center;max-width:1280px;width:100%">
+    <div style="font-weight:700;font-size:15px;margin-right:auto">Money Tracker <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;color:var(--ink3);margin-left:6px">v1 prototype · demo date Oct 14, 2026</span></div>
+    <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px">
+      <sc-for list="{{ viewOpts }}" as="o" hint-placeholder-count="2">
+        <button onClick="{{ o.onClick }}" style="border:0;border-radius:7px;padding:6px 12px;font-size:13px;white-space:nowrap;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px">
+      <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="2">
+        <button onClick="{{ o.onClick }}" style="border:0;border-radius:7px;padding:6px 12px;font-size:13px;white-space:nowrap;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px">
+      <sc-for list="{{ scenarioOpts }}" as="o" hint-placeholder-count="4">
+        <button onClick="{{ o.onClick }}" style="border:0;border-radius:7px;padding:6px 12px;font-size:13px;white-space:nowrap;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+      </sc-for>
+    </div>
+    <button onClick="{{ simulateReminder }}" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:13px;white-space:nowrap;cursor:pointer">Simulate 21:00 reminder</button>
+  </div>
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:10px;background:oklch(0.16 0.01 260);border-radius:54px;box-shadow:0 30px 60px -20px oklch(0.2 0.02 260 / 0.35)">
+  <div style="position:relative;width:390px;height:844px;overflow:hidden;border-radius:44px;background:var(--bg);color:var(--ink)">
+
+    <div style="position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-size:15px;font-weight:600;z-index:5;background:var(--bg)">
+      <span>9:41</span>
+      <span style="width:24px;height:11px;border:1.5px solid var(--ink);border-radius:3px;display:block;position:relative"><span style="position:absolute;left:1.5px;top:1.5px;bottom:1.5px;width:15px;background:var(--ink);border-radius:1px;display:block"></span></span>
+    </div>
+
+    <div style="position:absolute;top:48px;left:0;right:0;bottom:0;overflow-y:auto;padding-bottom:130px;scrollbar-width:none" data-hscroll="1">
+
+      <!-- ONBOARDING -->
+      <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+        <div style="min-height:780px;display:flex;flex-direction:column;padding:12px 24px 28px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:28px">
+            <sc-for list="{{ ob.dots }}" as="d" hint-placeholder-count="4">
+              <span style="height:4px;flex:1;border-radius:2px;background:{{ d.bg }};display:block"></span>
+            </sc-for>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px">{{ ob.stepLabel }}</div>
+
+          <sc-if value="{{ ob.s1 }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:18px;flex:1">
+              <h1 style="font-size:32px;line-height:1.1;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:pretty">Track your salary and your savings, separately.</h1>
+              <p style="margin:0;color:var(--ink2);font-size:16px;line-height:1.5">See what's left of this month's pay, and know exactly how much savings you have after spending from it.</p>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+                <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px">
+                  <div style="font-weight:600;margin-bottom:4px">Your data stays on this device</div>
+                  <div style="color:var(--ink2);font-size:14px;line-height:1.45">No login, no cloud. Everything is stored in this browser only.</div>
+                </div>
+                <div style="background:var(--warn-soft);border:1px solid var(--line);border-radius:18px;padding:16px">
+                  <div style="font-weight:600;margin-bottom:4px">Back up regularly</div>
+                  <div style="color:var(--ink2);font-size:14px;line-height:1.45">If you clear browser data, anything without a backup is gone. Export a backup file from Settings at least once a month.</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ ob.s2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;flex:1">
+              <h1 style="font-size:28px;line-height:1.15;margin:0;font-weight:700;letter-spacing:-.02em">Add your accounts</h1>
+              <p style="margin:0;color:var(--ink2);font-size:15px;line-height:1.45">Banks, e-wallets or cash. Mark one as Salary — that's where your pay lands.</p>
+              <sc-for list="{{ ob.accounts }}" as="a" hint-placeholder-count="0">
+                <div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px">
+                  <span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:{{ a.soft }};color:{{ a.color }}">{{ a.initials }}</span>
+                  <div style="flex:1;min-width:0"><div style="font-weight:600">{{ a.name }}</div><div style="font-size:13px;color:var(--ink3)">{{ a.meta }}</div></div>
+                  <div style="font-weight:600">{{ a.balStr }}</div>
+                  <button onClick="{{ a.onRemove }}" style="border:0;background:none;color:var(--ink3);cursor:pointer;font-size:18px;padding:4px 6px">×</button>
+                </div>
+              </sc-for>
+              <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px">
+                <input value="{{ ob.form.name }}" onChange="{{ ob.onName }}" placeholder="Account name, e.g. BCA Salary" style="border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;font-size:15px;outline:none">
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ ob.typeOpts }}" as="o" hint-placeholder-count="3">
+                    <button onClick="{{ o.onClick }}" style="flex:1;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:10px;padding:9px 0;font-size:14px;cursor:pointer">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ ob.roleOpts }}" as="o" hint-placeholder-count="2">
+                    <button onClick="{{ o.onClick }}" style="flex:1;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:10px;padding:9px 0;font-size:14px;font-weight:600;cursor:pointer">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 14px">
+                  <span style="color:var(--ink3)">Rp</span>
+                  <input value="{{ ob.form.balStr }}" onChange="{{ ob.onBal }}" inputMode="numeric" placeholder="Starting balance" style="flex:1;border:0;background:none;padding:12px 6px;font-size:15px;outline:none">
+                </div>
+                <button onClick="{{ ob.add }}" style="border:1px dashed var(--ink3);background:none;border-radius:12px;padding:11px;font-weight:600;cursor:pointer">+ Add account</button>
+              </div>
+              <sc-if value="{{ ob.needSalary }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;color:var(--ink2)">Add at least one Salary account to continue.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ ob.s3 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;flex:1">
+              <h1 style="font-size:28px;line-height:1.15;margin:0;font-weight:700;letter-spacing:-.02em">Your pay cycle</h1>
+              <p style="margin:0;color:var(--ink2);font-size:15px;line-height:1.45">Months run payday to payday. Leftover salary is swept to savings at the end of each cycle.</p>
+              <div style="font-weight:600;font-size:14px">Payday</div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+                <sc-for list="{{ ob.dayOpts }}" as="o" hint-placeholder-count="28">
+                  <button onClick="{{ o.onClick }}" style="height:38px;border-radius:10px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};font-size:14px;cursor:pointer">{{ o.label }}</button>
+                </sc-for>
+              </div>
+              <div style="font-weight:600;font-size:14px">Monthly salary</div>
+              <div style="display:flex;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:0 14px">
+                <span style="color:var(--ink3)">Rp</span>
+                <input value="{{ ob.salaryStr }}" onChange="{{ ob.onSalary }}" inputMode="numeric" placeholder="9.000.000" style="flex:1;border:0;background:none;padding:13px 6px;font-size:16px;outline:none">
+              </div>
+              <div style="font-weight:600;font-size:14px">Sweep leftover salary to</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ ob.savOpts }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.onClick }}" style="border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:999px;padding:9px 14px;font-size:14px;cursor:pointer">{{ o.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ ob.noSav }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;color:var(--ink2)">Add a Savings account in the previous step to turn on the month-end sweep.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ ob.s4 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;flex:1">
+              <h1 style="font-size:28px;line-height:1.15;margin:0;font-weight:700;letter-spacing:-.02em">Daily reminder</h1>
+              <p style="margin:0;color:var(--ink2);font-size:15px;line-height:1.45">A nudge each evening to log anything you forgot. Works best when the app is installed to your home screen.</p>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <sc-for list="{{ ob.timeOpts }}" as="o" hint-placeholder-count="6">
+                  <button onClick="{{ o.onClick }}" style="height:48px;border-radius:12px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};font-size:16px;cursor:pointer">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <sc-if value="{{ ob.showBack }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ ob.back }}" style="height:54px;padding:0 20px;border-radius:16px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Back</button>
+            </sc-if>
+            <sc-if value="{{ ob.s4 }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ ob.skip }}" style="height:54px;padding:0 20px;border-radius:16px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Skip</button>
+            </sc-if>
+            <button onClick="{{ ob.next }}" style="flex:1;height:54px;border-radius:16px;border:0;background:var(--ink);color:var(--bg);font-weight:600;font-size:16px;cursor:pointer;opacity:{{ ob.nextOp }}">{{ ob.nextLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- HOME -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px">
+            <div style="font-size:26px;font-weight:700;letter-spacing:-.02em">Home</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink3)">{{ cycleLabel }}</div>
+          </div>
+
+          <div style="background:{{ hero.bg }};color:var(--on-accent);border-radius:24px;padding:20px 20px 18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Available this month</div>
+            <div style="font-size:40px;font-weight:700;letter-spacing:-.03em;margin:6px 0 2px">{{ hero.availStr }}</div>
+            <div style="font-size:14px;opacity:.9">{{ hero.sub }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid oklch(1 0 0 / 0.22)">
+              <div><div style="font-size:20px;font-weight:600">{{ hero.daysLeft }}</div><div style="font-size:12px;opacity:.85">days left in cycle</div></div>
+              <div><div style="font-size:20px;font-weight:600">{{ hero.dailyStr }}</div><div style="font-size:12px;opacity:.85">suggested per day</div></div>
+            </div>
+          </div>
+
+          <sc-if value="{{ showNothing }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px">
+              <div style="font-weight:600;margin-bottom:12px">Nothing logged today. Did you spend anything?</div>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ openQuickAdd }}" style="flex:1;height:44px;border-radius:12px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Quick add</button>
+                <button onClick="{{ onNoSpend }}" style="flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">No spending today</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--savings-soft);border:1px solid var(--line);border-radius:20px;padding:16px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--savings);margin-bottom:6px">Month-end sweep · {{ pending.cycle }}</div>
+              <div style="font-weight:600;font-size:16px;line-height:1.35;margin-bottom:4px">Move {{ pending.amountStr }} to {{ pending.toName }}.</div>
+              <div style="color:var(--ink2);font-size:14px;margin-bottom:12px">Did you transfer it in your bank app?</div>
+              <sc-if value="{{ pending.editing }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                  <div style="flex:1;display:flex;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:0 12px"><span style="color:var(--ink3)">Rp</span><input value="{{ pending.draftStr }}" onChange="{{ pending.onDraft }}" inputMode="numeric" style="flex:1;border:0;background:none;padding:10px 6px;outline:none;font-size:15px;min-width:0"></div>
+                  <button onClick="{{ pending.saveEdit }}" style="border:0;border-radius:12px;padding:0 16px;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Update</button>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ pending.done }}" style="flex:1.3;height:44px;border-radius:12px;border:0;background:var(--savings);color:var(--on-accent);font-weight:600;cursor:pointer">Done</button>
+                <button onClick="{{ pending.edit }}" style="flex:1.3;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Edit amount</button>
+                <button onClick="{{ pending.skip }}" style="flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Skip</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasRecon }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;gap:12px;align-items:center">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--warn);flex:none;display:block"></span>
+              <div style="flex:1;font-size:14px;line-height:1.4"><b>{{ reconSug.name }}</b> hasn't been checked in {{ reconSug.days }} days. Compare it with your bank app.</div>
+              <button onClick="{{ reconSug.onClick }}" style="border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:0 14px;height:40px;font-weight:600;cursor:pointer">Reconcile</button>
+            </div>
+          </sc-if>
+
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px 0 16px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px">
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--savings)">Total savings</div>
+                <div style="font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:4px">{{ savingsTotalStr }}</div>
+              </div>
+              <button onClick="{{ goAccounts }}" style="border:0;background:none;color:var(--ink2);font-size:14px;cursor:pointer;padding:4px 0">Accounts ›</button>
+            </div>
+            <div style="padding:0 18px;margin-top:4px;font-size:14px;color:{{ savSpentColor }}">{{ savSpentLine }}</div>
+            <div data-hscroll="1" style="display:flex;gap:10px;overflow-x:auto;padding:14px 18px 2px;scrollbar-width:none">
+              <sc-for list="{{ savingsCards }}" as="s" hint-placeholder-count="2">
+                <div onClick="{{ s.onClick }}" style="flex:none;width:200px;border:1px solid var(--line);background:var(--bg);border-radius:16px;padding:14px;cursor:pointer">
+                  <div style="font-size:13px;color:var(--ink2)">{{ s.name }}</div>
+                  <div style="font-size:19px;font-weight:600;margin:4px 0 10px">{{ s.balStr }}</div>
+                  <sc-if value="{{ s.hasTarget }}" hint-placeholder-val="{{ true }}">
+                    <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ s.pct }}%;background:var(--savings);border-radius:3px"></div></div>
+                    <div style="font-size:12px;color:var(--ink3);margin-top:6px">{{ s.pctStr }} of {{ s.targetStr }}</div>
+                  </sc-if>
+                  <sc-if value="{{ s.noTarget }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px;color:var(--ink3)">No target set · <span style="color:var(--savings)">Set one</span></div>
+                  </sc-if>
+                  <sc-if value="{{ s.hasSpent }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px;color:var(--expense);margin-top:6px">{{ s.spentStr }} spent this cycle</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font-weight:600">Budgets</div>
+              <button onClick="{{ goBudgets }}" style="border:0;background:none;color:var(--ink2);font-size:14px;cursor:pointer;padding:0">All budgets ›</button>
+            </div>
+            <sc-if value="{{ hasBudgets }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ budgetTop }}" as="b" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="font-weight:500">{{ b.name }}</span><span style="color:{{ b.statusColor }}">{{ b.spentStr }} <span style="color:var(--ink3)">/ {{ b.budgetStr }}</span></span></div>
+                    <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:{{ b.barPct }}%;background:{{ b.barColor }};border-radius:4px"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noBudgets }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:14px;color:var(--ink2);line-height:1.45">No budgets yet. Set a monthly limit for a category to see how close you are.</div>
+              <button onClick="{{ goBudgets }}" style="margin-top:12px;border:1px solid var(--line);background:var(--surface2);border-radius:12px;height:40px;padding:0 14px;font-weight:600;cursor:pointer">Set a budget</button>
+            </sc-if>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px 18px 8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <div style="font-weight:600">Recent</div>
+              <button onClick="{{ goTxns }}" style="border:0;background:none;color:var(--ink2);font-size:14px;cursor:pointer;padding:0">See all ›</button>
+            </div>
+            <sc-for list="{{ recent }}" as="t" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)">
+                <span style="position:relative;width:38px;height:38px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:{{ t.iconBg }};color:{{ t.iconFg }};border:{{ t.iconBorder }}">{{ t.icon }}<sc-if value="{{ t.auto }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--ink2)">↻</span></sc-if></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div>
+                  <div style="font-size:13px;color:var(--ink3);display:flex;gap:6px;align-items:center">{{ t.sub }}<sc-if value="{{ t.fromSavings }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;color:var(--savings);background:var(--savings-soft);border-radius:6px;padding:1px 6px">Savings</span></sc-if></div>
+                </div>
+                <div style="font-weight:600;color:{{ t.amtColor }}">{{ t.amtStr }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noRecent }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:18px 0 14px;border-top:1px solid var(--line);font-size:14px;color:var(--ink2);line-height:1.45">No transactions yet. Tap <b>+</b> to log your first expense — it takes three taps.</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- TRANSACTIONS -->
+      <sc-if value="{{ isTxns }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;padding:0 4px">Transactions</div>
+          <div data-hscroll="1" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none">
+            <sc-for list="{{ typeChips }}" as="c" hint-placeholder-count="5">
+              <button onClick="{{ c.onClick }}" style="flex:none;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer">{{ c.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <select value="{{ fAcct }}" onChange="{{ onFAcct }}" style="min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 8px;font-size:13px">
+              <sc-for list="{{ acctFilterOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+            </select>
+            <select value="{{ fCat }}" onChange="{{ onFCat }}" style="min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 8px;font-size:13px">
+              <sc-for list="{{ catFilterOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+            </select>
+            <select value="{{ fRange }}" onChange="{{ onFRange }}" style="min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 8px;font-size:13px">
+              <option value="cycle">This cycle</option><option value="7">Last 7 days</option><option value="all">All time</option>
+            </select>
+          </div>
+          <div style="font-size:12px;color:var(--ink3);padding:0 4px">Swipe left or tap a row to edit or delete.</div>
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+            <div>
+              <div style="display:flex;justify-content:space-between;padding:6px 4px;font-size:13px;color:var(--ink3)"><span style="font-weight:600;color:var(--ink2)">{{ g.label }}</span><span>{{ g.totalStr }}</span></div>
+              <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+                <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="3">
+                  <div style="position:relative;border-top:{{ t.divider }}">
+                    <div style="position:absolute;top:0;right:0;bottom:0;display:flex">
+                      <sc-if value="{{ t.canEdit }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.onEdit }}" style="width:74px;border:0;background:var(--surface2);font-weight:600;cursor:pointer">Edit</button></sc-if>
+                      <button onClick="{{ t.onDelete }}" style="width:74px;border:0;background:var(--expense);color:var(--on-accent);font-weight:600;cursor:pointer">Delete</button>
+                    </div>
+                    <div onPointerDown="{{ t.onDown }}" onPointerUp="{{ t.onUp }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);transform:translateX({{ t.tx }}px);transition:transform .22s ease;cursor:pointer;touch-action:pan-y;user-select:none">
+                      <span style="position:relative;width:38px;height:38px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:{{ t.iconBg }};color:{{ t.iconFg }};border:{{ t.iconBorder }}">{{ t.icon }}<sc-if value="{{ t.auto }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--ink2)">↻</span></sc-if></span>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div>
+                        <div style="font-size:13px;color:var(--ink3);display:flex;gap:6px;align-items:center">{{ t.sub }}<sc-if value="{{ t.fromSavings }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;color:var(--savings);background:var(--savings-soft);border-radius:6px;padding:1px 6px">Savings</span></sc-if></div>
+                      </div>
+                      <div style="font-weight:600;color:{{ t.amtColor }}">{{ t.amtStr }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noGroups }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:60px 20px;color:var(--ink2);font-size:15px;line-height:1.5">{{ emptyTxnMsg }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ACCOUNTS -->
+      <sc-if value="{{ isAccounts }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;padding:0 4px">Accounts</div>
+          <div>
+            <div style="display:flex;justify-content:space-between;padding:6px 4px;font-size:13px"><span style="font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--salary);font-size:11px">Salary</span><span style="color:var(--ink2)">{{ salTotalStr }}</span></div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+              <sc-for list="{{ salaryRows }}" as="a" hint-placeholder-count="2">
+                <div onClick="{{ a.onClick }}" style="display:flex;align-items:center;gap:12px;padding:14px;border-top:{{ a.divider }};cursor:pointer">
+                  <span style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--salary-soft);color:var(--salary)">{{ a.initials }}</span>
+                  <div style="flex:1;min-width:0"><div style="font-weight:600">{{ a.name }}</div><div style="font-size:13px;color:var(--ink3)">{{ a.meta }}</div></div>
+                  <div style="font-weight:600;color:{{ a.balColor }}">{{ a.balStr }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;padding:6px 4px;font-size:13px"><span style="font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--savings);font-size:11px">Savings</span><span style="color:var(--ink2)">{{ savingsTotalStr }}</span></div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+              <sc-for list="{{ savingsRows }}" as="a" hint-placeholder-count="2">
+                <div onClick="{{ a.onClick }}" style="padding:14px;border-top:{{ a.divider }};cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--savings-soft);color:var(--savings)">{{ a.initials }}</span>
+                    <div style="flex:1;min-width:0"><div style="font-weight:600">{{ a.name }}</div><div style="font-size:13px;color:var(--ink3)">{{ a.meta }}</div></div>
+                    <div style="font-weight:600">{{ a.balStr }}</div>
+                  </div>
+                  <sc-if value="{{ a.hasTarget }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 0 52px"><div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ a.pct }}%;background:var(--savings)"></div></div><span style="font-size:12px;color:var(--ink3)">{{ a.pctStr }} of {{ a.targetStr }}</span></div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ACCOUNT DETAIL -->
+      <sc-if value="{{ isAcctDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:4px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <button onClick="{{ det.back }}" style="align-self:flex-start;border:0;background:none;color:var(--ink2);font-size:15px;cursor:pointer;padding:6px 4px">‹ Accounts</button>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:{{ det.roleColor }}">{{ det.role }}</span><span style="font-size:12px;color:var(--ink3)">· {{ det.type }}</span></div>
+            <div style="font-size:20px;font-weight:600;margin-top:6px">{{ det.name }}</div>
+            <div style="font-size:36px;font-weight:700;letter-spacing:-.03em;margin:6px 0 4px">{{ det.balStr }}</div>
+            <sc-if value="{{ det.hasTarget }}" hint-placeholder-val="{{ false }}">
+              <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:10px"><div style="height:100%;width:{{ det.pct }}%;background:var(--savings)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);margin-top:6px"><span>{{ det.pctStr }} of {{ det.targetStr }}</span><span>{{ det.remainStr }} to go</span></div>
+            </sc-if>
+            <sc-if value="{{ det.noTarget }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <div style="flex:1;display:flex;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 12px"><span style="color:var(--ink3);font-size:14px">Target Rp</span><input value="{{ det.targetDraftStr }}" onChange="{{ det.onTargetDraft }}" inputMode="numeric" placeholder="20.000.000" style="flex:1;min-width:0;border:0;background:none;padding:10px 6px;outline:none"></div>
+                <button onClick="{{ det.saveTarget }}" style="border:0;border-radius:12px;padding:0 14px;background:var(--savings);color:var(--on-accent);font-weight:600;cursor:pointer">Set target</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ det.hasSpent }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px;font-size:14px;color:var(--expense)">{{ det.spentStr }} spent from savings this cycle</div>
+            </sc-if>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+              <span style="font-size:13px;color:var(--ink3)">Last reconciled {{ det.lastRec }}</span>
+              <button onClick="{{ det.onReconcile }}" style="border:0;border-radius:12px;height:42px;padding:0 18px;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Reconcile</button>
+            </div>
+          </div>
+          <div style="font-weight:600;padding:0 4px">Transactions</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+            <sc-for list="{{ det.items }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:{{ t.divider }}">
+                <span style="width:36px;height:36px;flex:none;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;background:{{ t.iconBg }};color:{{ t.iconFg }};border:{{ t.iconBorder }}">{{ t.icon }}</span>
+                <div style="flex:1;min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div><div style="font-size:13px;color:var(--ink3)">{{ t.dateStr }}</div></div>
+                <div style="font-weight:600;color:{{ t.amtColor }}">{{ t.amtStr }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ det.noItems }}" hint-placeholder-val="{{ false }}"><div style="padding:22px 16px;color:var(--ink2);font-size:14px">No transactions on this account yet.</div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- BUDGETS -->
+      <sc-if value="{{ isBudgets }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px">
+            <div style="font-size:26px;font-weight:700;letter-spacing:-.02em">Budgets</div>
+            <button onClick="{{ toggleEditBudgets }}" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;height:36px;padding:0 14px;font-weight:600;cursor:pointer">{{ editBudgetsLabel }}</button>
+          </div>
+          <div style="font-size:13px;color:var(--ink3);padding:0 4px">{{ cycleLabel }} · {{ budgetSummary }}</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden">
+            <sc-for list="{{ budgetRows }}" as="b" hint-placeholder-count="5">
+              <div style="padding:14px 16px;border-top:{{ b.divider }}">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="width:10px;height:10px;border-radius:50%;background:{{ b.dot }};display:block;flex:none"></span>
+                  <span style="flex:1;font-weight:600">{{ b.name }}</span>
+                  <sc-if value="{{ b.showStatic }}" hint-placeholder-val="{{ true }}"><span style="font-size:14px;color:{{ b.statusColor }}">{{ b.rightStr }}</span></sc-if>
+                  <sc-if value="{{ b.showInput }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 10px;width:150px"><span style="color:var(--ink3);font-size:13px">Rp</span><input value="{{ b.draftStr }}" onChange="{{ b.onDraft }}" inputMode="numeric" placeholder="No limit" style="flex:1;min-width:0;border:0;background:none;padding:8px 4px;outline:none;text-align:right"></div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ b.hasBar }}" hint-placeholder-val="{{ true }}">
+                  <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin:10px 0 6px 20px"><div style="height:100%;width:{{ b.barPct }}%;background:{{ b.barColor }}"></div></div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-left:20px"><span>{{ b.spentStr }} spent · {{ b.pctStr }}</span><span style="color:{{ b.statusColor }}">{{ b.remainStr }}</span></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ editingBudgets }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ saveBudgets }}" style="height:52px;border-radius:16px;border:0;background:var(--ink);color:var(--bg);font-weight:600;font-size:16px;cursor:pointer">Save budgets</button>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- RECURRING -->
+      <sc-if value="{{ isRecurring }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px">
+            <div style="font-size:26px;font-weight:700;letter-spacing:-.02em">Recurring</div>
+            <button onClick="{{ addRule }}" style="border:1px solid var(--line);background:var(--surface);border-radius:10px;height:36px;padding:0 14px;font-weight:600;cursor:pointer">+ New rule</button>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden">
+            <sc-for list="{{ rules }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:{{ r.divider }};opacity:{{ r.op }}">
+                <div onClick="{{ r.onEdit }}" style="flex:1;min-width:0;cursor:pointer">
+                  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-weight:600">{{ r.name }}</span><span style="font-weight:600;color:{{ r.amtColor }}">{{ r.amtStr }}</span></div>
+                  <div style="font-size:13px;color:var(--ink3);margin-top:2px">{{ r.meta }}</div>
+                </div>
+                <button onClick="{{ r.onToggle }}" aria-label="Pause or resume" style="flex:none;width:46px;height:28px;border-radius:14px;border:0;background:{{ r.trackBg }};position:relative;cursor:pointer;padding:0"><span style="position:absolute;top:3px;left:{{ r.knobX }}px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px oklch(0 0 0 / .25);display:block;transition:left .2s"></span></button>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noRules }}" hint-placeholder-val="{{ false }}"><div style="padding:22px 16px;color:var(--ink2);font-size:14px;line-height:1.45">No recurring rules. Add bills and subscriptions so they log themselves and count against this month's available money.</div></sc-if>
+          </div>
+          <div style="font-weight:600;padding:4px 4px 0">Auto-logged this cycle</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+            <sc-for list="{{ autoLogged }}" as="t" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:{{ t.divider }}">
+                <span style="width:36px;height:36px;flex:none;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--surface2);color:var(--ink2)">↻</span>
+                <div style="flex:1;min-width:0"><div style="font-weight:500">{{ t.title }}</div><div style="font-size:13px;color:var(--ink3)">{{ t.dateStr }} · {{ t.acctName }}</div></div>
+                <div style="font-weight:600;color:{{ t.amtColor }}">{{ t.amtStr }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noAuto }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 16px;color:var(--ink2);font-size:14px">Nothing auto-logged yet this cycle.</div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- REPORTS -->
+      <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;padding:0 4px">Reports</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px">
+            <button onClick="{{ rep.prev }}" style="width:44px;height:40px;border:0;background:none;font-size:20px;cursor:pointer;opacity:{{ rep.prevOp }}">‹</button>
+            <span style="font-weight:600">{{ rep.label }}</span>
+            <button onClick="{{ rep.next }}" style="width:44px;height:40px;border:0;background:none;font-size:20px;cursor:pointer;opacity:{{ rep.nextOp }}">›</button>
+          </div>
+          <sc-if value="{{ rep.noData }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:50px 20px;color:var(--ink2);line-height:1.5">No spending recorded in this cycle yet.</div>
+          </sc-if>
+          <sc-if value="{{ rep.hasData }}" hint-placeholder-val="{{ true }}">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px">
+              <div style="font-weight:600;margin-bottom:14px">Spending by category</div>
+              <div style="display:flex;gap:18px;align-items:center">
+                <div style="width:132px;height:132px;flex:none;border-radius:50%;background:{{ rep.conic }};display:flex;align-items:center;justify-content:center">
+                  <div style="width:88px;height:88px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:11px;color:var(--ink3)">Total</span><span style="font-weight:700;font-size:15px">{{ rep.totalShort }}</span></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
+                  <sc-for list="{{ rep.segs }}" as="s" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.color }};flex:none;display:block"></span><span style="flex:1;color:var(--ink2)">{{ s.name }}</span><span style="font-weight:600">{{ s.pctStr }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px">
+                <div style="font-size:13px;color:var(--ink3)">Total spent</div>
+                <div style="font-size:19px;font-weight:700;margin-top:4px">{{ rep.totalStr }}</div>
+              </div>
+              <div style="background:var(--surface);border:1.5px dashed var(--ink3);border-radius:20px;padding:16px">
+                <div style="font-size:13px;color:var(--ink3)">Unlogged spending</div>
+                <div style="font-size:19px;font-weight:700;margin-top:4px">{{ rep.untrackedStr }}</div>
+              </div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px">
+              <div style="font-weight:600;margin-bottom:12px">Paid from salary vs savings</div>
+              <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px"><div style="width:{{ rep.salPct }}%;background:var(--salary)"></div><div style="flex:1;background:var(--savings)"></div></div>
+              <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13px">
+                <div><div style="color:var(--salary);font-weight:600">Salary</div><div>{{ rep.salStr }}</div></div>
+                <div style="text-align:right"><div style="color:var(--savings);font-weight:600">Savings</div><div>{{ rep.savStr }}</div></div>
+              </div>
+            </div>
+          </sc-if>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px">
+            <div style="font-weight:600;margin-bottom:14px">Spending, last 6 cycles</div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:130px">
+              <sc-for list="{{ rep.bars }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                  <span style="font-size:10px;color:var(--ink3)">{{ b.valStr }}</span>
+                  <div style="width:100%;height:{{ b.h }}%;background:{{ b.bg }};border-radius:6px 6px 3px 3px"></div>
+                  <span style="font-size:11px;color:var(--ink2)">{{ b.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><span style="font-weight:600">Savings growth</span><span style="font-size:14px;color:var(--savings);font-weight:600">{{ savingsTotalStr }}</span></div>
+            <svg viewBox="0 0 300 100" style="width:100%;height:110px;display:block;overflow:visible"><polyline points="{{ rep.linePts }}" fill="none" stroke="var(--savings)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:6px">
+              <sc-for list="{{ rep.lineLabels }}" as="l" hint-placeholder-count="6"><span>{{ l }}</span></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SETTINGS -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 18px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;padding:0 4px">Settings</div>
+          <sc-if value="{{ st.stale }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--warn-soft);border:1px solid var(--line);border-radius:18px;padding:14px 16px;font-size:14px;line-height:1.45"><b>Last backup: {{ st.lastBackup }}.</b> It's been over 30 days. Export a backup so you don't lose your data.</div>
+          </sc-if>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:4px 4px 0">Cycle</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px"><span>Payday</span>
+              <select value="{{ st.payday }}" onChange="{{ st.onPayday }}" style="border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 10px">
+                <sc-for list="{{ st.dayOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+              </select></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line)"><span>Sweep leftover to</span>
+              <select value="{{ st.defSav }}" onChange="{{ st.onDefSav }}" style="border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 10px;max-width:170px">
+                <sc-for list="{{ st.savOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+              </select></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line)"><span>Daily reminder</span>
+              <select value="{{ st.reminder }}" onChange="{{ st.onReminder }}" style="border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 10px">
+                <sc-for list="{{ st.timeOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+              </select></div>
+            <sc-if value="{{ st.notifBlocked }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:12px 16px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2);line-height:1.45">
+                <div style="font-weight:600;color:var(--ink);margin-bottom:2px">Notifications are blocked</div>
+                Reminders will appear as a banner inside the app instead. To get them on your lock screen, allow notifications for this site in your browser settings, and install the app to your home screen.
+                <div><button onClick="{{ st.checkNotif }}" style="margin-top:10px;border:1px solid var(--line);background:var(--surface2);border-radius:10px;height:36px;padding:0 12px;font-weight:600;cursor:pointer">Check again</button></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ st.notifOk }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:12px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--income)">Notifications on · reminder at {{ st.reminder }}</div>
+            </sc-if>
+          </div>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:4px 4px 0">Categories</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+            <sc-for list="{{ st.cats }}" as="c" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 6px 16px;border-top:{{ c.divider }};opacity:{{ c.op }}">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ c.color }};display:block;flex:none"></span>
+                <input value="{{ c.name }}" onChange="{{ c.onRename }}" style="flex:1;min-width:0;border:0;background:none;padding:8px 0;outline:none">
+                <button onClick="{{ c.onToggle }}" style="border:0;background:none;color:var(--ink2);font-size:13px;cursor:pointer;padding:8px">{{ c.toggleLabel }}</button>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:8px;padding:10px 10px 10px 16px;border-top:1px solid var(--line)">
+              <input value="{{ st.newCat }}" onChange="{{ st.onNewCat }}" placeholder="New category" style="flex:1;min-width:0;border:0;background:none;outline:none">
+              <button onClick="{{ st.addCat }}" style="border:1px solid var(--line);background:var(--surface2);border-radius:10px;height:34px;padding:0 12px;font-weight:600;cursor:pointer">Add</button>
+            </div>
+          </div>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:4px 4px 0">Data · stored on this device</div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:14px;color:var(--ink2)">Last backup: <b style="color:{{ st.backupColor }}">{{ st.lastBackup }}</b></div>
+            <button onClick="{{ st.exportJSON }}" style="height:48px;border-radius:14px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Export backup (JSON)</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button onClick="{{ st.exportCSV }}" style="height:46px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Export CSV</button>
+              <button onClick="{{ st.importClick }}" style="height:46px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Import backup</button>
+            </div>
+            <input type="file" accept=".json,application/json" ref="{{ st.fileRef }}" onChange="{{ st.onFile }}" style="display:none">
+            <sc-if value="{{ st.hasImportError }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--expense-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.45"><b>Import failed.</b> {{ st.importError }} Nothing was changed.</div>
+            </sc-if>
+            <button onClick="{{ st.resetAsk }}" style="height:46px;border-radius:14px;border:1px solid var(--line);background:none;color:var(--expense);font-weight:600;cursor:pointer;margin-top:4px">Reset all data</button>
+          </div>
+
+          <sc-if value="{{ st.hasSweeps }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:4px 4px 0">Sweep history</div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+              <sc-for list="{{ st.sweeps }}" as="s" hint-placeholder-count="1">
+                <div style="display:flex;justify-content:space-between;padding:12px 16px;border-top:{{ s.divider }};font-size:14px"><span>{{ s.cycle }} · <span style="color:var(--ink3)">{{ s.status }}</span></span><span style="font-weight:600">{{ s.amountStr }}</span></div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- notification -->
+    <sc-if value="{{ hasNotif }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ notifTap }}" style="position:absolute;top:52px;left:10px;right:10px;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 12px 30px -8px oklch(0 0 0 / .3);cursor:pointer">
+        <span style="width:38px;height:38px;border-radius:10px;background:var(--salary);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-weight:700">Rp</span>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:13px"><b>Money Tracker</b><span style="color:var(--ink3)">now</span></div><div style="font-size:14px;color:var(--ink2)">Did you spend anything today? Tap to log it.</div></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showFab }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ openQuickAdd }}" aria-label="Quick add" style="position:absolute;right:20px;bottom:100px;z-index:10;width:62px;height:62px;border-radius:22px;border:0;background:var(--ink);color:var(--bg);font-size:30px;font-weight:400;cursor:pointer;box-shadow:0 10px 24px -8px oklch(0.2 0.02 260 / .5);display:flex;align-items:center;justify-content:center">+</button>
+    </sc-if>
+
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;left:0;right:0;bottom:0;height:86px;z-index:9;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 6px 24px">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+          <button onClick="{{ n.onClick }}" style="border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:{{ n.color }};font-size:12px;font-weight:{{ n.weight }}">
+            <span style="width:22px;height:4px;border-radius:2px;background:{{ n.bar }};display:block"></span>{{ n.label }}
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- toast -->
+    <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:16px;right:16px;bottom:100px;z-index:40;background:var(--ink);color:var(--bg);border-radius:16px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:10px;min-height:52px">
+        <span style="flex:1;font-size:14px">{{ toastMsg }}</span>
+        <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button onClick="{{ undo }}" style="border:0;background:none;color:var(--bg);font-weight:700;padding:0 14px;height:40px;cursor:pointer;text-decoration:underline">Undo</button></sc-if>
+      </div>
+    </sc-if>
+
+    <!-- sheets -->
+    <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:20;background:var(--scrim)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:28px 28px 0 0;max-height:96%;overflow-y:auto;padding:10px 18px 26px">
+        <div style="width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px"></div>
+
+        <sc-if value="{{ isQA }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:2px;background:var(--surface2);border-radius:12px;padding:3px">
+              <sc-for list="{{ qa.tabs }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.onClick }}" style="flex:1;border:0;border-radius:9px;padding:8px 0;font-size:14px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <div style="text-align:center;font-size:42px;font-weight:700;letter-spacing:-.03em;color:{{ qa.amtColor }};padding:2px 0">{{ qa.amountStr }}</div>
+            <div style="display:flex;gap:8px;justify-content:center">
+              <sc-for list="{{ qa.shortcuts }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.onClick }}" style="border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ qa.isExpense }}" hint-placeholder-val="{{ true }}">
+              <div data-hscroll="1" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px">
+                <sc-for list="{{ qa.cats }}" as="o" hint-placeholder-count="6">
+                  <button onClick="{{ o.onClick }}" style="flex:none;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:999px;padding:9px 14px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.dot }};display:block"></span>{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ qa.isIncome }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ qa.sources }}" as="o" hint-placeholder-count="3">
+                  <button onClick="{{ o.onClick }}" style="flex:1;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:999px;padding:9px 0;font-size:14px;cursor:pointer">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div>
+              <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">{{ qa.fromLabel }}</div>
+              <div data-hscroll="1" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px">
+                <sc-for list="{{ qa.accts }}" as="o" hint-placeholder-count="4">
+                  <button onClick="{{ o.onClick }}" style="flex:none;border:1.5px solid {{ o.border }};background:{{ o.bg }};color:var(--ink);border-radius:12px;padding:7px 12px;text-align:left;cursor:pointer;opacity:{{ o.op }}"><div style="font-size:14px;font-weight:600">{{ o.label }}</div><div style="font-size:11px;color:{{ o.roleColor }};font-weight:600">{{ o.role }} · {{ o.balStr }}</div></button>
+                </sc-for>
+              </div>
+            </div>
+            <sc-if value="{{ qa.isTransfer }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">To</div>
+                <div data-hscroll="1" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px">
+                  <sc-for list="{{ qa.toAccts }}" as="o" hint-placeholder-count="4">
+                    <button onClick="{{ o.onClick }}" style="flex:none;border:1.5px solid {{ o.border }};background:{{ o.bg }};color:var(--ink);border-radius:12px;padding:7px 12px;text-align:left;cursor:pointer;opacity:{{ o.op }}"><div style="font-size:14px;font-weight:600">{{ o.label }}</div><div style="font-size:11px;color:{{ o.roleColor }};font-weight:600">{{ o.role }} · {{ o.balStr }}</div></button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ qa.savWarn }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--savings-soft);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.4;display:flex;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:var(--savings);flex:none;margin-top:5px;display:block"></span><span>This will reduce your savings: <b>{{ qa.savWarnStr }}</b></span></div>
+            </sc-if>
+            <sc-if value="{{ qa.overWarn }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--warn-soft);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.4;display:flex;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none;margin-top:5px;display:block"></span><span>{{ qa.overStr }}</span></div>
+            </sc-if>
+            <div style="display:flex;gap:6px;align-items:center">
+              <sc-for list="{{ qa.dates }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.onClick }}" style="flex:none;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:10px;padding:8px 10px;font-size:13px;cursor:pointer">{{ o.label }}</button>
+              </sc-for>
+              <input value="{{ qa.note }}" onChange="{{ qa.onNote }}" placeholder="Note (optional)" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13px;outline:none">
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              <sc-for list="{{ qa.keys }}" as="k" hint-placeholder-count="12">
+                <button onClick="{{ k.onClick }}" style="height:50px;border:0;border-radius:14px;background:var(--surface2);font-size:22px;font-weight:500;cursor:pointer">{{ k.label }}</button>
+              </sc-for>
+            </div>
+            <button onClick="{{ qa.save }}" style="height:56px;border-radius:18px;border:0;background:var(--ink);color:var(--bg);font-weight:700;font-size:17px;cursor:pointer;opacity:{{ qa.saveOp }}">{{ qa.saveLabel }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isMore }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:6px">
+            <sc-for list="{{ moreItems }}" as="m" hint-placeholder-count="3">
+              <button onClick="{{ m.onClick }}" style="display:flex;justify-content:space-between;align-items:center;height:58px;padding:0 18px;border-radius:16px;border:1px solid var(--line);background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;text-align:left"><span>{{ m.label }}</span><span style="font-size:13px;font-weight:400;color:var(--ink3)">{{ m.hint }}</span></button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isRecon }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:20px;font-weight:700">Reconcile {{ recon.name }}</div>
+            <div style="font-size:14px;color:var(--ink2)">Enter the real balance from your bank app.</div>
+            <div style="display:flex;align-items:center;border:1.5px solid var(--ink);background:var(--bg);border-radius:14px;padding:0 14px"><span style="color:var(--ink3);font-size:18px">Rp</span><input value="{{ recon.realStr }}" onChange="{{ recon.onReal }}" inputMode="numeric" placeholder="0" style="flex:1;min-width:0;border:0;background:none;padding:14px 8px;font-size:22px;font-weight:600;outline:none"></div>
+            <div style="background:var(--surface2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:14px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--ink2)">Balance in app</span><span>{{ recon.appStr }}</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--ink2)">Real balance</span><span>{{ recon.realDisp }}</span></div>
+              <div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:8px;font-weight:700"><span>Difference</span><span style="color:{{ recon.diffColor }}">{{ recon.diffStr }}</span></div>
+            </div>
+            <div style="font-size:13px;color:var(--ink2);line-height:1.45">{{ recon.explain }}</div>
+            <sc-if value="{{ recon.hasDiff }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button onClick="{{ recon.find }}" style="height:50px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">I'll find it</button>
+                <button onClick="{{ recon.record }}" style="height:50px;border-radius:14px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Record as Untracked</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ recon.match }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ recon.markOk }}" style="height:50px;border-radius:14px;border:0;background:var(--income);color:var(--on-accent);font-weight:600;cursor:pointer">Balances match · Mark as checked</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isRule }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:20px;font-weight:700">{{ rule.title }}</div>
+            <div style="display:flex;gap:2px;background:var(--surface2);border-radius:12px;padding:3px">
+              <sc-for list="{{ rule.tabs }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onClick }}" style="flex:1;border:0;border-radius:9px;padding:8px 0;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+            </div>
+            <input value="{{ rule.name }}" onChange="{{ rule.onName }}" placeholder="Name, e.g. Internet bill" style="border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;outline:none">
+            <div style="display:flex;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 14px"><span style="color:var(--ink3)">Rp</span><input value="{{ rule.amtStr }}" onChange="{{ rule.onAmt }}" inputMode="numeric" placeholder="Amount" style="flex:1;min-width:0;border:0;background:none;padding:12px 6px;outline:none"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <select value="{{ rule.acct }}" onChange="{{ rule.onAcct }}" style="border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 10px;min-width:0"><sc-for list="{{ rule.acctOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select>
+              <select value="{{ rule.day }}" onChange="{{ rule.onDay }}" style="border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 10px;min-width:0"><sc-for list="{{ rule.dayOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select>
+            </div>
+            <sc-if value="{{ rule.isExpense }}" hint-placeholder-val="{{ true }}">
+              <select value="{{ rule.cat }}" onChange="{{ rule.onCat }}" style="border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 10px"><sc-for list="{{ rule.catOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select>
+            </sc-if>
+            <div style="font-size:13px;color:var(--ink3)">Logged automatically on the due date and shown in Auto-logged for review.</div>
+            <div style="display:flex;gap:8px">
+              <sc-if value="{{ rule.canDelete }}" hint-placeholder-val="{{ false }}"><button onClick="{{ rule.del }}" style="height:52px;padding:0 18px;border-radius:14px;border:1px solid var(--line);background:none;color:var(--expense);font-weight:600;cursor:pointer">Delete</button></sc-if>
+              <button onClick="{{ rule.save }}" style="flex:1;height:52px;border-radius:14px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer;opacity:{{ rule.saveOp }}">Save rule</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isConfirmReset }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:20px;font-weight:700">Reset all data?</div>
+            <div style="font-size:14px;color:var(--ink2);line-height:1.5">This deletes every account, transaction and setting on this device. It can't be undone. Export a backup first if you might need it.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+              <button onClick="{{ closeSheet }}" style="height:50px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Cancel</button>
+              <button onClick="{{ confirmReset }}" style="height:50px;border-radius:14px;border:0;background:var(--expense);color:var(--on-accent);font-weight:600;cursor:pointer">Reset everything</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </div>
+  </div>
+  </sc-if>
+
+  <!-- DESKTOP -->
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ false }}">
+  <div style="width:100%;max-width:1280px;overflow-x:auto">
+  <div style="width:1240px;margin:0 auto;display:grid;grid-template-columns:220px 1fr;background:var(--bg);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-height:820px">
+    <div style="background:var(--surface);border-right:1px solid var(--line);padding:24px 14px;display:flex;flex-direction:column;gap:4px">
+      <div style="font-weight:700;font-size:17px;padding:0 10px 20px">Money Tracker</div>
+      <sc-for list="{{ deskNav }}" as="n" hint-placeholder-count="7">
+        <button onClick="{{ n.onClick }}" style="text-align:left;border:0;border-radius:10px;padding:10px 12px;font-size:14px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};font-weight:{{ n.weight }}">{{ n.label }}</button>
+      </sc-for>
+      <div style="margin-top:auto;padding:12px;font-size:12px;color:var(--ink3);line-height:1.5">Stored on this device<br>Last backup: {{ st.lastBackup }}</div>
+    </div>
+    <div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-size:28px;font-weight:700;letter-spacing:-.02em">Home</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink3)">{{ cycleLabel }}</div>
+        <button onClick="{{ deskQuickAdd }}" style="margin-left:auto;height:44px;padding:0 20px;border-radius:14px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">+ Quick add</button>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:18px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="background:{{ hero.bg }};color:var(--on-accent);border-radius:24px;padding:26px 28px;display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:20px;align-items:end">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Available this month</div>
+              <div style="font-size:46px;font-weight:700;letter-spacing:-.03em;margin:6px 0 2px">{{ hero.availStr }}</div>
+              <div style="font-size:14px;opacity:.9">{{ hero.sub }}</div>
+            </div>
+            <div><div style="font-size:24px;font-weight:600">{{ hero.daysLeft }}</div><div style="font-size:13px;opacity:.85">days left in cycle</div></div>
+            <div><div style="font-size:24px;font-weight:600">{{ hero.dailyStr }}</div><div style="font-size:13px;opacity:.85">suggested per day</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px">
+              <div style="font-weight:600;margin-bottom:16px">Budgets</div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ budgetTop }}" as="b" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>{{ b.name }}</span><span style="color:{{ b.statusColor }}">{{ b.pctStr }}</span></div>
+                    <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:{{ b.barPct }}%;background:{{ b.barColor }}"></div></div>
+                    <div style="font-size:12px;color:var(--ink3);margin-top:5px">{{ b.spentStr }} of {{ b.budgetStr }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ noBudgets }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:var(--ink2)">No budgets set yet.</div></sc-if>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px 20px 8px">
+              <div style="font-weight:600;margin-bottom:4px">Recent</div>
+              <sc-for list="{{ recent }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+                  <span style="width:32px;height:32px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:{{ t.iconBg }};color:{{ t.iconFg }};border:{{ t.iconBorder }}">{{ t.icon }}</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div><div style="font-size:12px;color:var(--ink3)">{{ t.sub }}</div></div>
+                  <div style="font-size:14px;font-weight:600;color:{{ t.amtColor }}">{{ t.amtStr }}</div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noRecent }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0;border-top:1px solid var(--line);font-size:14px;color:var(--ink2)">No transactions yet.</div></sc-if>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--savings)">Total savings</div>
+            <div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin:4px 0 2px">{{ savingsTotalStr }}</div>
+            <div style="font-size:14px;color:{{ savSpentColor }};margin-bottom:14px">{{ savSpentLine }}</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ savingsCards }}" as="s" hint-placeholder-count="2">
+                <div style="border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px">
+                  <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--ink2)">{{ s.name }}</span><span style="font-weight:600">{{ s.balStr }}</span></div>
+                  <sc-if value="{{ s.hasTarget }}" hint-placeholder-val="{{ true }}"><div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:10px"><div style="height:100%;width:{{ s.pct }}%;background:var(--savings)"></div></div><div style="font-size:12px;color:var(--ink3);margin-top:5px">{{ s.pctStr }} of {{ s.targetStr }}</div></sc-if>
+                  <sc-if value="{{ s.hasSpent }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--expense);margin-top:4px">{{ s.spentStr }} spent this cycle</div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--savings-soft);border:1px solid var(--line);border-radius:22px;padding:18px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--savings);margin-bottom:6px">Month-end sweep</div>
+              <div style="font-weight:600;line-height:1.35">Move {{ pending.amountStr }} to {{ pending.toName }}.</div>
+              <div style="color:var(--ink2);font-size:14px;margin:2px 0 12px">Did you transfer it in your bank app?</div>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ pending.done }}" style="flex:1;height:40px;border-radius:12px;border:0;background:var(--savings);color:var(--on-accent);font-weight:600;cursor:pointer">Done</button>
+                <button onClick="{{ pending.skip }}" style="flex:1;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">Skip</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasRecon }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;font-size:14px;line-height:1.45"><b>{{ reconSug.name }}</b> hasn't been checked in {{ reconSug.days }} days. Compare it with your bank app to catch anything you forgot.</div>
+          </sc-if>
+          <sc-if value="{{ showNothing }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px">
+              <div style="font-weight:600;margin-bottom:10px">Nothing logged today. Did you spend anything?</div>
+              <div style="display:flex;gap:8px"><button onClick="{{ deskQuickAdd }}" style="flex:1;height:40px;border-radius:12px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer">Quick add</button><button onClick="{{ onNoSpend }}" style="flex:1;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer">No spending today</button></div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;scenario&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;over&quot;,&quot;empty&quot;,&quot;onboarding&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mobile&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;mobile&quot;,&quot;tsType&quot;:&quot;'mobile'|'desktop'&quot;}}">
+const TODAY='2026-10-14';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const dots=n=>Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const fmt=n=>(n<0?'−':'')+'Rp'+dots(n);
+const dig=s=>s?dots(Number(s)):'';
+const short=n=>n>=1e6?'Rp'+(Math.round(n/1e5)/10).toString().replace('.',',')+'jt':'Rp'+Math.round(n/1e3)+'rb';
+const dayDiff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+const nice=s=>{const d=parse(s);return MON[d.getMonth()]+' '+d.getDate();};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d);};
+const HUES={food:55,transport:235,bills:295,shopping:345,entertainment:185,health:135,other:95};
+const hueOf=id=>HUES[id]!=null?HUES[id]:([...String(id)].reduce((h,c)=>h+c.charCodeAt(0)*37,0)%360);
+const catFg=id=>`oklch(0.56 0.12 ${hueOf(id)})`;
+const catChart=id=>`oklch(0.7 0.12 ${hueOf(id)})`;
+const catBg=id=>`oklch(0.7 0.12 ${hueOf(id)} / 0.18)`;
+const initials=n=>n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const netOf=(id,txns)=>txns.reduce((s,t)=>{
+  if(t.type==='expense'&&t.acct===id)return s-t.amount;
+  if((t.type==='income'||t.type==='adjust')&&t.acct===id)return s+t.amount;
+  if(t.type==='transfer'){if(t.acct===id)s-=t.amount;if(t.to===id)s+=t.amount;}
+  return s;},0);
+const SEL={bg:'var(--ink)',fg:'var(--surface)',border:'var(--ink)'};
+const UNSEL={bg:'var(--surface)',fg:'var(--ink)',border:'var(--line)'};
+const chip=on=>on?SEL:UNSEL;
+
+function seed(sc){
+  const accounts=[
+    {id:'bca',name:'BCA Salary',type:'Bank',role:'Salary',target:null,lastRec:'2026-10-09'},
+    {id:'gopay',name:'GoPay',type:'E-wallet',role:'Salary',target:null,lastRec:'2026-09-26'},
+    {id:'maybank',name:'Maybank Savings',type:'Bank',role:'Savings',target:20000000,lastRec:'2026-10-05'},
+    {id:'jago',name:'Jago Emergency',type:'Bank',role:'Savings',target:15000000,lastRec:'2026-10-01'}];
+  const cats=[['food','Food',2000000],['transport','Transport',800000],['bills','Bills',null],['shopping','Shopping',null],['entertainment','Entertainment',500000],['health','Health',null],['other','Other',null]].map(([id,name,budget])=>({id,name,budget,archived:false}));
+  const T=(type,amount,acct,date,note,x)=>Object.assign({type,amount,acct,date,note},x||{});
+  let txns=[
+    T('income',9000000,'bca','2026-09-25','Salary',{source:'Salary',auto:true}),
+    T('transfer',1000000,'bca','2026-09-25','Emergency fund',{to:'jago'}),
+    T('transfer',500000,'bca','2026-09-26','Top up',{to:'gopay'}),
+    T('expense',400000,'bca','2026-09-28','Groceries',{cat:'food'}),
+    T('expense',400000,'bca','2026-09-30','Electricity',{cat:'bills',auto:true}),
+    T('expense',128000,'gopay','2026-10-01','Grab',{cat:'transport'}),
+    T('expense',450000,'bca','2026-10-04','Concert ticket',{cat:'entertainment'}),
+    T('expense',400000,'bca','2026-10-05','Dinner with friends',{cat:'food'}),
+    T('expense',70000,'gopay','2026-10-06','Movie',{cat:'entertainment'}),
+    T('adjust',-320000,'gopay','2026-10-07','Untracked'),
+    T('expense',200000,'bca','2026-10-08','Fuel',{cat:'transport'}),
+    T('expense',85000,'bca','2026-10-09','Pharmacy',{cat:'health'}),
+    T('expense',350000,'bca','2026-10-10','Internet bill',{cat:'bills',auto:true}),
+    T('expense',715000,'bca','2026-10-11','Groceries',{cat:'food'}),
+    T('expense',1200000,'maybank','2026-10-12','New headphones',{cat:'shopping'}),
+    T('expense',45000,'bca','2026-10-13','Lunch',{cat:'food'}),
+    T('expense',32000,'gopay','2026-10-13','Grab',{cat:'transport'})
+  ].map((t,i)=>Object.assign(t,{id:'t'+(i+1),seq:i+1}));
+  let recurring=[
+    {id:'r1',name:'Salary',type:'income',amount:9000000,acct:'bca',cat:null,day:25,paused:false},
+    {id:'r2',name:'Internet bill',type:'expense',amount:350000,acct:'bca',cat:'bills',day:10,paused:false},
+    {id:'r3',name:'Spotify',type:'expense',amount:55000,acct:'gopay',cat:'entertainment',day:18,paused:false},
+    {id:'r4',name:'Gym membership',type:'expense',amount:300000,acct:'bca',cat:'health',day:20,paused:false},
+    {id:'r5',name:'Phone plan',type:'expense',amount:100000,acct:'gopay',cat:'bills',day:22,paused:false},
+    {id:'r6',name:'Electricity',type:'expense',amount:400000,acct:'bca',cat:'bills',day:30,paused:false}];
+  let hist=[
+    {label:'Apr 25 – May 24',bar:'May',total:6120000,untracked:180000,fromSav:0,savings:14200000},
+    {label:'May 25 – Jun 24',bar:'Jun',total:7380000,untracked:410000,fromSav:1500000,savings:15100000},
+    {label:'Jun 25 – Jul 24',bar:'Jul',total:5840000,untracked:90000,fromSav:0,savings:16000000},
+    {label:'Jul 25 – Aug 24',bar:'Aug',total:6910000,untracked:260000,fromSav:600000,savings:17300000},
+    {label:'Aug 25 – Sep 24',bar:'Sep',total:7240000,untracked:150000,fromSav:0,savings:19600000}];
+  const B={bca:6450000,gopay:350000,maybank:12000000,jago:8500000};
+  let pending={amount:850000,from:'bca',to:'maybank',cycle:'Aug 25 – Sep 24'};
+  if(sc==='over'){B.bca=150000;B.gopay=105000;}
+  if(sc==='empty'){txns=[];recurring=[];hist=[];pending=null;cats.forEach(c=>c.budget=null);accounts.forEach(a=>{a.target=null;a.lastRec=TODAY;});}
+  accounts.forEach(a=>{a.start=B[a.id]-netOf(a.id,txns);});
+  return {accounts,cats,txns,recurring,hist,pending,sweeps:[],
+    settings:{payday:25,salary:9000000,defSav:'maybank',reminder:'21:00',lastBackup:sc==='empty'?null:'2026-09-10',notif:'blocked'}};
+}
+
+class Component extends DCLogic {
+  state = this.initial((this.props&&this.props.scenario)||'normal');
+
+  initial(sc){
+    const prev=this.state;
+    return Object.assign(seed(sc),{
+      scenario:sc,
+      theme:(prev&&prev.theme)||(this.props&&this.props.theme)||'light',
+      view:(prev&&prev.view)||(this.props&&this.props.view)||'mobile',
+      screen:sc==='onboarding'?'onboarding':'home',acctId:null,sheet:null,qa:null,recon:null,rule:null,toast:null,
+      filters:{type:'all',acct:'all',cat:'all',range:'cycle'},swiped:null,noSpend:false,
+      editingBudgets:false,budgetDraft:{},repOff:0,pendingEdit:false,pendingDraft:'',targetDraft:'',
+      importError:null,notif:false,newCat:'',lastAcct:null,seq:100,
+      ob:{step:1,accounts:[],form:{name:'',type:'Bank',role:'Salary',bal:''},payday:25,salary:'',defSav:null,reminder:'21:00'}
+    });
+  }
+  componentDidUpdate(p){
+    if(p.scenario!==this.props.scenario&&this.props.scenario)this.setState(this.initial(this.props.scenario));
+    if(p.theme!==this.props.theme&&this.props.theme)this.setState({theme:this.props.theme});
+    if(p.view!==this.props.view&&this.props.view)this.setState({view:this.props.view});
+  }
+  componentWillUnmount(){clearTimeout(this.tt);}
+  toast(msg,undo){clearTimeout(this.tt);this.setState({toast:{msg,undo}});this.tt=setTimeout(()=>this.setState({toast:null}),4500);}
+  cycle(off){
+    const p=this.state.settings.payday,t=parse(TODAY);let m=t.getMonth();if(t.getDate()<p)m-=1;m+=off;
+    const s=new Date(2026,m,p),e=new Date(2026,m+1,p-1);
+    return {s:iso(s),e:iso(e),label:`${MON[s.getMonth()]} ${s.getDate()} – ${MON[e.getMonth()]} ${e.getDate()}`,bar:MON[e.getMonth()]};
+  }
+  nextDue(r){const t=parse(TODAY);let d=new Date(2026,t.getMonth(),r.day);if(iso(d)<=TODAY)d=new Date(2026,t.getMonth()+1,r.day);return iso(d);}
+  bal(id){const a=this.state.accounts.find(x=>x.id===id);return a?a.start+netOf(id,this.state.txns):0;}
+  acct(id){return this.state.accounts.find(a=>a.id===id)||{name:'—',role:'Salary'};}
+  cat(id){return this.state.cats.find(c=>c.id===id)||{name:'Other',id:'other'};}
+  go(screen,extra){this.setState(Object.assign({screen,sheet:null,swiped:null},extra||{}));}
+
+  openQA(edit){
+    const S=this.state;
+    if(edit){this.setState({sheet:'qa',qa:{mode:edit.type,digits:String(edit.amount),cat:edit.cat||null,acct:edit.acct,to:edit.to||S.settings.defSav,source:edit.source||'Salary',date:edit.date,note:edit.note||'',editId:edit.id},swiped:null});return;}
+    const def=S.lastAcct||(S.accounts.find(a=>a.role==='Salary')||S.accounts[0]||{}).id;
+    this.setState({sheet:'qa',notif:false,qa:{mode:'expense',digits:'',cat:null,acct:def,to:S.settings.defSav||(S.accounts.find(a=>a.id!==def)||{}).id,source:'Salary',date:TODAY,note:'',editId:null}});
+  }
+  saveQA(){
+    const S=this.state,q=S.qa,amount=Number(q.digits);
+    if(!amount||(q.mode==='expense'&&!q.cat)||(q.mode==='transfer'&&q.to===q.acct))return;
+    const note=q.note.trim()||(q.mode==='expense'?this.cat(q.cat).name:q.mode==='income'?q.source:'Transfer');
+    const t={type:q.mode,amount,acct:q.acct,date:q.date,note};
+    if(q.mode==='expense')t.cat=q.cat;if(q.mode==='income')t.source=q.source;if(q.mode==='transfer')t.to=q.to;
+    let txns,undo,msg;
+    if(q.editId){const prev=S.txns.find(x=>x.id===q.editId);txns=S.txns.map(x=>x.id===q.editId?Object.assign({},prev,t,{auto:prev.auto}):x);undo={kind:'restore',t:prev};msg='Changes saved';}
+    else{const id='n'+S.seq;txns=S.txns.concat([Object.assign(t,{id,seq:S.seq})]);undo={kind:'remove',id};msg=(q.mode==='expense'?'Expense':q.mode==='income'?'Income':'Transfer')+' saved · '+fmt(amount);}
+    this.setState({txns,sheet:null,qa:null,lastAcct:q.acct,seq:S.seq+1});
+    this.toast(msg,undo);
+  }
+  doUndo(){
+    const S=this.state,u=S.toast&&S.toast.undo;if(!u)return;clearTimeout(this.tt);
+    if(u.kind==='remove')this.setState({txns:S.txns.filter(t=>t.id!==u.id),toast:null});
+    else if(u.kind==='restore'){const has=S.txns.some(t=>t.id===u.t.id);this.setState({txns:has?S.txns.map(t=>t.id===u.t.id?u.t:t):S.txns.concat([u.t]),toast:null});}
+    else if(u.kind==='state')this.setState(Object.assign(u.prev,{toast:null}));
+  }
+  deco(t,i){
+    const a=this.acct(t.acct);let r={id:t.id,auto:!!t.auto,divider:i?'1px solid var(--line)':'none',iconBorder:'none',fromSavings:false,dateStr:nice(t.date)};
+    if(t.type==='expense'){const c=this.cat(t.cat);Object.assign(r,{icon:c.name[0],iconBg:catBg(c.id),iconFg:catFg(c.id),title:t.note||c.name,sub:c.name+' · '+a.name,amtStr:'−'+fmt(t.amount),amtColor:'var(--expense)',fromSavings:a.role==='Savings'});}
+    else if(t.type==='income')Object.assign(r,{icon:'+',iconBg:'var(--income-soft)',iconFg:'var(--income)',title:t.note||t.source,sub:(t.source||'Income')+' · '+a.name,amtStr:'+'+fmt(t.amount),amtColor:'var(--income)'});
+    else if(t.type==='transfer')Object.assign(r,{icon:'⇄',iconBg:'var(--surface2)',iconFg:'var(--ink2)',title:t.note||'Transfer',sub:a.name+' → '+this.acct(t.to).name,amtStr:fmt(t.amount),amtColor:'var(--ink2)'});
+    else Object.assign(r,{icon:'?',iconBg:'transparent',iconFg:'var(--ink2)',iconBorder:'1.5px dashed var(--ink3)',title:'Untracked',sub:'Reconciled · '+a.name,amtStr:(t.amount<0?'':'+')+fmt(t.amount),amtColor:'var(--ink2)'});
+    return r;
+  }
+  download(name,text,type){const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+
+  renderVals(){
+    const S=this.state,set=p=>this.setState(p),cyc=this.cycle(0);
+    const sorted=S.txns.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.seq-a.seq);
+    const salA=S.accounts.filter(a=>a.role==='Salary'),savA=S.accounts.filter(a=>a.role==='Savings');
+    const salBal=salA.reduce((s,a)=>s+this.bal(a.id),0),savTotal=savA.reduce((s,a)=>s+this.bal(a.id),0);
+    const upcoming=S.recurring.filter(r=>!r.paused&&r.type==='expense'&&this.nextDue(r)<=cyc.e);
+    const upSum=upcoming.reduce((s,r)=>s+r.amount,0),avail=salBal-upSum,daysLeft=dayDiff(TODAY,cyc.e)+1;
+    const cycTx=S.txns.filter(t=>t.date>=cyc.s&&t.date<=cyc.e);
+    const spentBy={};cycTx.forEach(t=>{if(t.type==='expense')spentBy[t.cat]=(spentBy[t.cat]||0)+t.amount;});
+    const savSpentOf=id=>cycTx.filter(t=>t.type==='expense'&&t.acct===id).reduce((s,t)=>s+t.amount,0);
+    const savSpent=savA.reduce((s,a)=>s+savSpentOf(a.id),0);
+    const pick=(opts,cur,fn)=>opts.map(o=>Object.assign({label:o.label,onClick:()=>fn(o.value)},chip(o.value===cur)));
+    const seg=(opts,cur,fn)=>opts.map(o=>({label:o.label,onClick:()=>fn(o.value),bg:o.value===cur?'var(--ink)':'transparent',fg:o.value===cur?'var(--bg)':'var(--ink2)'}));
+    const v={theme:S.theme,isMobile:S.view==='mobile',isDesktop:S.view==='desktop',cycleLabel:cyc.label};
+
+    v.viewOpts=seg([{label:'Mobile',value:'mobile'},{label:'Desktop',value:'desktop'}],S.view,x=>set({view:x}));
+    v.themeOpts=seg([{label:'Light',value:'light'},{label:'Dark',value:'dark'}],S.theme,x=>set({theme:x}));
+    v.scenarioOpts=seg([{label:'Sample data',value:'normal'},{label:'Overspent',value:'over'},{label:'New user',value:'empty'},{label:'Onboarding',value:'onboarding'}],S.scenario,x=>{clearTimeout(this.tt);this.setState(this.initial(x));});
+    v.simulateReminder=()=>set({notif:true,view:'mobile',sheet:null});
+    v.hasNotif=S.notif&&S.screen!=='onboarding';v.notifTap=()=>this.openQA();
+
+    const scr=S.screen;
+    Object.assign(v,{isOnboarding:scr==='onboarding',isHome:scr==='home',isTxns:scr==='txns',isReports:scr==='reports',isAccounts:scr==='accounts',isAcctDetail:scr==='acct',isBudgets:scr==='budgets',isRecurring:scr==='recurring',isSettings:scr==='settings'});
+    v.showNav=scr!=='onboarding';v.showFab=scr!=='onboarding'&&!S.sheet;
+    const navDefs=[['Home','home'],['Transactions','txns'],['Reports','reports'],['Accounts','accounts'],['More','more']];
+    const activeNav=scr==='acct'?'accounts':['budgets','recurring','settings'].includes(scr)?'more':scr;
+    v.navItems=navDefs.map(([label,id])=>{const on=id===activeNav;return {label,color:on?'var(--ink)':'var(--ink3)',weight:on?600:500,bar:on?'var(--ink)':'transparent',onClick:()=>id==='more'?set({sheet:'more'}):this.go(id)};});
+    v.openQuickAdd=()=>this.openQA();
+    v.deskQuickAdd=()=>{this.setState({view:'mobile'});this.openQA();};
+    v.deskNav=[['Home','home'],['Transactions','txns'],['Reports','reports'],['Accounts','accounts'],['Budgets','budgets'],['Recurring','recurring'],['Settings','settings']].map(([label,id])=>({label,bg:id==='home'?'var(--surface2)':'transparent',fg:id==='home'?'var(--ink)':'var(--ink2)',weight:id==='home'?600:500,onClick:()=>this.go(id,{view:'mobile'})}));
+
+    // hero
+    const neg=avail<0;
+    v.hero={bg:neg?'var(--expense)':'var(--salary)',availStr:fmt(avail),daysLeft,
+      dailyStr:neg?'Rp0':fmt(Math.floor(avail/daysLeft/1000)*1000),
+      sub:neg?`You're ${fmt(-avail)} over this month.`:`${fmt(salBal)} in salary accounts − ${fmt(upSum)} upcoming bills`};
+    v.showNothing=!S.noSpend&&!S.txns.some(t=>t.date===TODAY)&&S.accounts.length>0;
+    v.onNoSpend=()=>{set({noSpend:true});this.toast('Got it — no spending today.');};
+    v.hasPending=!!S.pending;
+    if(S.pending){const p=S.pending;
+      v.pending={amountStr:fmt(p.amount),toName:this.acct(p.to).name,cycle:p.cycle,editing:S.pendingEdit,draftStr:dig(S.pendingDraft),
+        onDraft:e=>set({pendingDraft:e.target.value.replace(/\D/g,'').slice(0,12)}),
+        edit:()=>set({pendingEdit:!S.pendingEdit,pendingDraft:String(p.amount)}),
+        saveEdit:()=>{const a=Number(S.pendingDraft);if(a)set({pending:Object.assign({},p,{amount:a}),pendingEdit:false});},
+        done:()=>{const prev={txns:S.txns,pending:S.pending,sweeps:S.sweeps,seq:S.seq};
+          set({txns:S.txns.concat([{id:'n'+S.seq,seq:S.seq,type:'transfer',amount:p.amount,acct:p.from,to:p.to,date:TODAY,note:'Month-end sweep'}]),seq:S.seq+1,pending:null,pendingEdit:false,sweeps:S.sweeps.concat([{cycle:p.cycle,amount:p.amount,status:'Transferred'}])});
+          this.toast(`${fmt(p.amount)} moved to ${this.acct(p.to).name}`,{kind:'state',prev});},
+        skip:()=>{const prev={pending:S.pending,sweeps:S.sweeps};set({pending:null,pendingEdit:false,sweeps:S.sweeps.concat([{cycle:p.cycle,amount:p.amount,status:'Skipped'}])});this.toast('Sweep skipped · kept in Settings › Sweep history',{kind:'state',prev});}};
+    } else v.pending={};
+    const stale=S.accounts.map(a=>({a,d:dayDiff(a.lastRec||TODAY,TODAY)})).filter(x=>x.d>=14).sort((x,y)=>y.d-x.d)[0];
+    v.hasRecon=!!stale;
+    v.reconSug=stale?{name:stale.a.name,days:stale.d,onClick:()=>set({sheet:'recon',recon:{acct:stale.a.id,digits:''}})}:{};
+
+    v.savingsTotalStr=fmt(savTotal);
+    v.savSpentLine=savSpent?`−${fmt(savSpent)} spent from savings this cycle`:'Nothing spent from savings this cycle';
+    v.savSpentColor=savSpent?'var(--expense)':'var(--ink3)';
+    v.savingsCards=savA.map(a=>{const b=this.bal(a.id),sp=savSpentOf(a.id),pct=a.target?Math.min(100,Math.round(b/a.target*100)):0;
+      return {name:a.name,balStr:fmt(b),hasTarget:!!a.target,noTarget:!a.target,pct,pctStr:pct+'%',targetStr:a.target?fmt(a.target):'',hasSpent:sp>0,spentStr:'−'+fmt(sp),onClick:()=>this.go('acct',{acctId:a.id,targetDraft:''})};});
+    v.goAccounts=()=>this.go('accounts');v.goBudgets=()=>this.go('budgets');v.goTxns=()=>this.go('txns');
+
+    const activeCats=S.cats.filter(c=>!c.archived);
+    const bRow=c=>{const sp=spentBy[c.id]||0,pct=c.budget?Math.round(sp/c.budget*100):0;
+      const col=pct>=100?'var(--expense)':pct>=80?'var(--warn)':'var(--salary)';
+      return {name:c.name,id:c.id,pct,pctStr:pct+'%',barPct:Math.min(100,pct),barColor:col,statusColor:pct>=100?'var(--expense)':'var(--ink2)',spentStr:fmt(sp),budgetStr:c.budget?fmt(c.budget):'',
+        remainStr:c.budget?(c.budget-sp>=0?fmt(c.budget-sp)+' left':fmt(sp-c.budget)+' over'):''};};
+    const budgeted=activeCats.filter(c=>c.budget).map(bRow).sort((a,b)=>b.pct-a.pct);
+    v.budgetTop=budgeted.slice(0,3);v.hasBudgets=budgeted.length>0;v.noBudgets=!budgeted.length;
+    v.recent=sorted.slice(0,5).map((t,i)=>this.deco(t,i));v.noRecent=!S.txns.length;
+
+    // transactions
+    const F=S.filters,setF=p=>set({filters:Object.assign({},F,p),swiped:null});
+    v.typeChips=pick([{label:'All',value:'all'},{label:'Expenses',value:'expense'},{label:'Income',value:'income'},{label:'Transfers',value:'transfer'},{label:'Untracked',value:'adjust'}],F.type,x=>setF({type:x}));
+    v.fAcct=F.acct;v.fCat=F.cat;v.fRange=F.range;
+    v.onFAcct=e=>setF({acct:e.target.value});v.onFCat=e=>setF({cat:e.target.value});v.onFRange=e=>setF({range:e.target.value});
+    v.acctFilterOpts=[{value:'all',label:'All accounts'}].concat(S.accounts.map(a=>({value:a.id,label:a.name})));
+    v.catFilterOpts=[{value:'all',label:'All categories'}].concat(S.cats.map(c=>({value:c.id,label:c.name})));
+    const from=F.range==='cycle'?cyc.s:F.range==='7'?addDays(TODAY,-6):'0000';
+    const filt=sorted.filter(t=>t.date>=from&&(F.type==='all'||t.type===F.type)&&(F.acct==='all'||t.acct===F.acct||t.to===F.acct)&&(F.cat==='all'||t.cat===F.cat));
+    const gm={},order=[];filt.forEach(t=>{if(!gm[t.date]){gm[t.date]=[];order.push(t.date);}gm[t.date].push(t);});
+    v.groups=order.map(d=>{const items=gm[d],spent=items.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const dd=dayDiff(d,TODAY),pd=parse(d);
+      return {label:dd===0?'Today':dd===1?'Yesterday':DOW[pd.getDay()]+', '+nice(d),totalStr:spent?'−'+fmt(spent):'',
+        items:items.map((t,i)=>{const r=this.deco(t,i),canEdit=t.type!=='adjust',on=S.swiped===t.id;
+          return Object.assign(r,{canEdit,tx:on?(canEdit?-148:-74):0,
+            onDown:e=>{this.px=e.clientX;this.pid=t.id;},
+            onUp:e=>{if(this.pid!==t.id)return;const dx=e.clientX-this.px;this.pid=null;set({swiped:dx<-30?t.id:dx>30?null:(this.state.swiped===t.id?null:t.id)});},
+            onEdit:()=>this.openQA(t),
+            onDelete:()=>{set({txns:S.txns.filter(x=>x.id!==t.id),swiped:null});this.toast('Transaction deleted',{kind:'restore',t});}});})};});
+    v.noGroups=!v.groups.length;
+    v.emptyTxnMsg=S.txns.length?'No transactions match these filters.':'No transactions yet. Tap + to log your first one.';
+
+    // accounts
+    v.salTotalStr=fmt(salBal);
+    const aRow=(a,i)=>{const b=this.bal(a.id),pct=a.target?Math.min(100,Math.round(b/a.target*100)):0;
+      return {name:a.name,initials:initials(a.name),meta:a.type+' · checked '+(dayDiff(a.lastRec||TODAY,TODAY)===0?'today':dayDiff(a.lastRec,TODAY)+'d ago'),balStr:fmt(b),balColor:b<0?'var(--expense)':'var(--ink)',divider:i?'1px solid var(--line)':'none',
+        hasTarget:!!a.target,pct,pctStr:pct+'%',targetStr:a.target?fmt(a.target):'',onClick:()=>this.go('acct',{acctId:a.id,targetDraft:''})};};
+    v.salaryRows=salA.map(aRow);v.savingsRows=savA.map(aRow);
+
+    const da=S.accounts.find(a=>a.id===S.acctId);
+    if(da){const b=this.bal(da.id),pct=da.target?Math.min(100,Math.round(b/da.target*100)):0,isSav=da.role==='Savings',sp=isSav?savSpentOf(da.id):0;
+      const items=sorted.filter(t=>t.acct===da.id||t.to===da.id).map((t,i)=>{const r=this.deco(t,i);if(t.type==='transfer'&&t.to===da.id){r.amtStr='+'+fmt(t.amount);r.amtColor='var(--income)';}return r;});
+      const lr=dayDiff(da.lastRec||TODAY,TODAY);
+      v.det={name:da.name,type:da.type,role:da.role,roleColor:isSav?'var(--savings)':'var(--salary)',balStr:fmt(b),hasTarget:isSav&&!!da.target,noTarget:isSav&&!da.target,
+        pct,pctStr:pct+'%',targetStr:da.target?fmt(da.target):'',remainStr:da.target?fmt(Math.max(0,da.target-b)):'',hasSpent:sp>0,spentStr:'−'+fmt(sp),
+        lastRec:lr===0?'today':lr===1?'yesterday':lr+' days ago',items,noItems:!items.length,
+        targetDraftStr:dig(S.targetDraft),onTargetDraft:e=>set({targetDraft:e.target.value.replace(/\D/g,'').slice(0,12)}),
+        saveTarget:()=>{const tg=Number(S.targetDraft);if(tg)set({accounts:S.accounts.map(a=>a.id===da.id?Object.assign({},a,{target:tg}):a),targetDraft:''});},
+        back:()=>this.go('accounts'),onReconcile:()=>set({sheet:'recon',recon:{acct:da.id,digits:''}})};
+    } else v.det={items:[]};
+
+    // budgets
+    const editing=S.editingBudgets;
+    v.editingBudgets=editing;v.editBudgetsLabel=editing?'Cancel':'Edit';
+    v.toggleEditBudgets=()=>{const d={};S.cats.forEach(c=>d[c.id]=c.budget?String(c.budget):'');set({editingBudgets:!editing,budgetDraft:d});};
+    v.saveBudgets=()=>{set({cats:S.cats.map(c=>Object.assign({},c,{budget:Number(S.budgetDraft[c.id])||null})),editingBudgets:false});this.toast('Budgets updated');};
+    const totB=activeCats.reduce((s,c)=>s+(c.budget||0),0),totS=activeCats.filter(c=>c.budget).reduce((s,c)=>s+(spentBy[c.id]||0),0);
+    v.budgetSummary=totB?`${fmt(totS)} of ${fmt(totB)} budgeted`:'No budgets set — tap Edit to add limits';
+    v.budgetRows=activeCats.map((c,i)=>{const r=bRow(c);return Object.assign(r,{divider:i?'1px solid var(--line)':'none',dot:catChart(c.id),
+      showStatic:!editing,showInput:editing,hasBar:!editing&&!!c.budget,
+      rightStr:c.budget?fmt(c.budget):(spentBy[c.id]?fmt(spentBy[c.id])+' spent · no limit':'No limit'),
+      statusColor:c.budget?r.statusColor:'var(--ink3)',
+      draftStr:dig(S.budgetDraft[c.id]),onDraft:e=>set({budgetDraft:Object.assign({},S.budgetDraft,{[c.id]:e.target.value.replace(/\D/g,'').slice(0,12)})})});});
+
+    // recurring
+    v.rules=S.recurring.map((r,i)=>{const nd=this.nextDue(r),inD=dayDiff(TODAY,nd);
+      return {name:r.name,amtStr:(r.type==='income'?'+':'−')+fmt(r.amount),amtColor:r.type==='income'?'var(--income)':'var(--ink)',
+        meta:r.paused?'Paused · '+this.acct(r.acct).name:`Day ${r.day} · next ${nice(nd)} (in ${inD}d) · ${this.acct(r.acct).name}`,
+        divider:i?'1px solid var(--line)':'none',op:r.paused?0.55:1,trackBg:r.paused?'var(--line)':'var(--income)',knobX:r.paused?3:21,
+        onToggle:()=>set({recurring:S.recurring.map(x=>x.id===r.id?Object.assign({},x,{paused:!x.paused}):x)}),
+        onEdit:()=>set({sheet:'rule',rule:{id:r.id,name:r.name,type:r.type,digits:String(r.amount),acct:r.acct,cat:r.cat||'bills',day:r.day}})};});
+    v.noRules=!S.recurring.length;
+    v.addRule=()=>set({sheet:'rule',rule:{id:null,name:'',type:'expense',digits:'',acct:(salA[0]||S.accounts[0]||{}).id,cat:'bills',day:1}});
+    v.autoLogged=cycTx.filter(t=>t.auto).sort((a,b)=>b.date.localeCompare(a.date)).map((t,i)=>Object.assign(this.deco(t,i),{acctName:this.acct(t.acct).name}));
+    v.noAuto=!v.autoLogged.length;
+
+    // reports
+    const H=S.hist,off=S.repOff;let R;
+    const RATIOS=[['food',.27],['transport',.11],['bills',.16],['shopping',.2],['entertainment',.1],['health',.06],['other',.1]];
+    if(off===0){const total=Object.values(spentBy).reduce((s,x)=>s+x,0);
+      R={label:cyc.label,total,byCat:Object.entries(spentBy).map(([id,a])=>({id,a})),untracked:-cycTx.filter(t=>t.type==='adjust'&&t.amount<0).reduce((s,t)=>s+t.amount,0),fromSav:savSpent};}
+    else{const h=H[H.length+off];R={label:h.label,total:h.total,untracked:h.untracked,fromSav:h.fromSav,
+      byCat:RATIOS.map(([id,r],k)=>({id,a:Math.round(h.total*(r+((k+H.length+off)%3-1)*0.02)/1000)*1000}))};
+      const sum=R.byCat.reduce((s,x)=>s+x.a,0);R.byCat[0].a+=h.total-sum;}
+    R.byCat=R.byCat.filter(x=>x.a>0).sort((a,b)=>b.a-a.a);
+    let acc=0;const stops=R.byCat.map(x=>{const p=R.total?x.a/R.total*100:0,s=`${catChart(x.id)} ${acc}% ${acc+p}%`;acc+=p;return s;});
+    const barsSrc=H.map(h=>({label:h.bar,v:h.total})).concat([{label:cyc.bar,v:R&&off===0?R.total:Object.values(spentBy).reduce((s,x)=>s+x,0)}]);
+    const curTotal=Object.values(spentBy).reduce((s,x)=>s+x,0);barsSrc[barsSrc.length-1].v=curTotal;
+    const maxB=Math.max(1,...barsSrc.map(b=>b.v));
+    const sel=barsSrc.length-1+off;
+    const lineSrc=H.map(h=>h.savings).concat([savTotal]);const lmin=Math.min(...lineSrc),lmax=Math.max(...lineSrc);
+    v.rep={label:R.label,hasData:R.total>0,noData:R.total===0,totalStr:fmt(R.total),totalShort:short(R.total),untrackedStr:fmt(R.untracked),
+      conic:stops.length?`conic-gradient(${stops.join(',')})`:'var(--surface2)',
+      segs:R.byCat.map(x=>({name:this.cat(x.id).name,color:catChart(x.id),pctStr:Math.round(x.a/R.total*100)+'%'})),
+      salPct:R.total?Math.round((R.total-R.fromSav)/R.total*100):100,salStr:fmt(R.total-R.fromSav),savStr:fmt(R.fromSav),
+      bars:barsSrc.map((b,i)=>({label:b.label,h:Math.max(2,Math.round(b.v/maxB*100*0.82)),valStr:short(b.v),bg:i===sel?'var(--salary)':'var(--surface2)'})),
+      linePts:lineSrc.length>1?lineSrc.map((x,i)=>`${(i*300/(lineSrc.length-1)).toFixed(1)},${(92-(lmax===lmin?0.5:(x-lmin)/(lmax-lmin))*80).toFixed(1)}`).join(' '):'0,50 300,50',
+      lineLabels:H.map(h=>h.bar).concat([cyc.bar]),
+      prevOp:H.length+off>0?1:0.25,nextOp:off<0?1:0.25,
+      prev:()=>{if(H.length+off>0)set({repOff:off-1});},next:()=>{if(off<0)set({repOff:off+1});}};
+
+    // settings
+    const st=S.settings,setS=p=>set({settings:Object.assign({},st,p)});
+    const lb=st.lastBackup?dayDiff(st.lastBackup,TODAY):null;
+    this.fileRef=this.fileRef||React.createRef();
+    v.st={payday:String(st.payday),onPayday:e=>setS({payday:Number(e.target.value)}),
+      dayOpts:Array.from({length:28},(_,i)=>({value:String(i+1),label:'Day '+(i+1)})),
+      defSav:st.defSav||'',onDefSav:e=>setS({defSav:e.target.value}),savOpts:savA.length?savA.map(a=>({value:a.id,label:a.name})):[{value:'',label:'No savings account'}],
+      reminder:st.reminder||'off',onReminder:e=>setS({reminder:e.target.value==='off'?null:e.target.value}),
+      timeOpts:[{value:'off',label:'Off'}].concat(['19:00','20:00','21:00','22:00','23:00'].map(t=>({value:t,label:t}))),
+      notifBlocked:st.notif==='blocked',notifOk:st.notif!=='blocked',checkNotif:()=>{setS({notif:'allowed'});this.toast('Notifications allowed');},
+      lastBackup:lb===null?'never':lb===0?'today':lb+' days ago',stale:lb===null?S.txns.length>0:lb>30,backupColor:(lb===null||lb>30)?'var(--expense)':'var(--ink)',
+      cats:S.cats.map((c,i)=>({name:c.name,color:catChart(c.id),divider:i?'1px solid var(--line)':'none',op:c.archived?0.5:1,toggleLabel:c.archived?'Restore':'Archive',
+        onRename:e=>set({cats:S.cats.map(x=>x.id===c.id?Object.assign({},x,{name:e.target.value}):x)}),
+        onToggle:()=>set({cats:S.cats.map(x=>x.id===c.id?Object.assign({},x,{archived:!x.archived}):x)})})),
+      newCat:S.newCat,onNewCat:e=>set({newCat:e.target.value}),
+      addCat:()=>{const n=S.newCat.trim();if(!n)return;set({cats:S.cats.concat([{id:'c'+S.seq,name:n,budget:null,archived:false}]),newCat:'',seq:S.seq+1});},
+      exportJSON:()=>{this.download('money-tracker-backup-'+TODAY+'.json',JSON.stringify({app:'money-tracker',version:1,exportedAt:TODAY,accounts:S.accounts,cats:S.cats,txns:S.txns,recurring:S.recurring,settings:st,pending:S.pending,sweeps:S.sweeps},null,2),'application/json');setS({lastBackup:TODAY});this.toast('Backup exported');},
+      exportCSV:()=>{const rows=[['date','type','amount','account','to_account','category','note']].concat(sorted.map(t=>[t.date,t.type==='adjust'?'untracked':t.type,t.type==='expense'?-t.amount:t.amount,this.acct(t.acct).name,t.to?this.acct(t.to).name:'',t.cat?this.cat(t.cat).name:'',t.note||'']));
+        this.download('money-tracker-'+TODAY+'.csv',rows.map(r=>r.map(x=>{x=String(x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;}).join(',')).join('\n'),'text/csv');this.toast('CSV exported');},
+      importClick:()=>{set({importError:null});this.fileRef.current&&this.fileRef.current.click();},fileRef:this.fileRef,
+      onFile:e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();
+        rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!Array.isArray(d.accounts)||!Array.isArray(d.txns)||!d.accounts.every(a=>a.id&&a.name))throw new Error('x');
+          set({accounts:d.accounts,txns:d.txns,cats:d.cats||S.cats,recurring:d.recurring||[],settings:Object.assign({},st,d.settings||{}),pending:d.pending||null,sweeps:d.sweeps||[],importError:null});this.toast('Backup imported · '+d.txns.length+' transactions');}
+          catch(err){set({importError:`"${f.name}" isn't a valid Money Tracker backup file.`});}};
+        rd.onerror=()=>set({importError:'The file could not be read.'});rd.readAsText(f);},
+      hasImportError:!!S.importError,importError:S.importError,
+      resetAsk:()=>set({sheet:'reset'}),
+      hasSweeps:S.sweeps.length>0,sweeps:S.sweeps.slice().reverse().map((s,i)=>({cycle:s.cycle,status:s.status,amountStr:fmt(s.amount),divider:i?'1px solid var(--line)':'none'}))};
+
+    // sheets
+    v.sheetOpen=!!S.sheet;v.closeSheet=()=>set({sheet:null,qa:null,recon:null,rule:null});
+    v.isQA=S.sheet==='qa'&&!!S.qa;v.isMore=S.sheet==='more';v.isRecon=S.sheet==='recon'&&!!S.recon;v.isRule=S.sheet==='rule'&&!!S.rule;v.isConfirmReset=S.sheet==='reset';
+    v.confirmReset=()=>{clearTimeout(this.tt);this.setState(this.initial('onboarding'));};
+    v.moreItems=[['Budgets','budgets','Monthly limits'],['Recurring','recurring','Bills & salary'],['Settings','settings','Backup, payday']].map(([label,id,hint])=>({label,hint,onClick:()=>this.go(id)}));
+
+    const q=S.qa;
+    if(q){const setQ=p=>set({qa:Object.assign({},q,p)}),amt=Number(q.digits)||0,a=this.acct(q.acct),ab=this.bal(q.acct);
+      const usage={};S.txns.forEach(t=>{if(t.cat)usage[t.cat]=(usage[t.cat]||0)+1;});
+      const accChip=(sel,fn,dis)=>S.accounts.map(x=>{const on=x.id===sel,sav=x.role==='Savings';
+        return {label:x.name,role:x.role,balStr:short(Math.max(0,this.bal(x.id))),roleColor:sav?'var(--savings)':'var(--salary)',
+          bg:on?(sav?'var(--savings-soft)':'var(--salary-soft)'):'var(--surface)',border:on?(sav?'var(--savings)':'var(--salary)'):'var(--line)',op:dis===x.id?0.35:1,onClick:()=>{if(dis!==x.id)fn(x.id);}};});
+      const yd=addDays(TODAY,-1),y2=addDays(TODAY,-2);
+      v.qa={tabs:seg([{label:'Expense',value:'expense'},{label:'Income',value:'income'},{label:'Transfer',value:'transfer'}],q.mode,m=>setQ({mode:m})).map(o=>Object.assign(o,{bg:o.bg==='transparent'?'transparent':'var(--surface)',fg:o.bg==='transparent'?'var(--ink2)':'var(--ink)'})),
+        amountStr:fmt(amt),amtColor:amt?'var(--ink)':'var(--ink3)',
+        shortcuts:[['+10rb',10000],['+50rb',50000],['+100rb',100000]].map(([label,n])=>({label,onClick:()=>setQ({digits:String(amt+n)})})),
+        isExpense:q.mode==='expense',isIncome:q.mode==='income',isTransfer:q.mode==='transfer',
+        cats:activeCats.slice().sort((x,y)=>(usage[y.id]||0)-(usage[x.id]||0)).map(c=>Object.assign({label:c.name,dot:catChart(c.id),onClick:()=>setQ({cat:c.id})},chip(c.id===q.cat))),
+        sources:pick(['Salary','Bonus','Other'].map(s=>({label:s,value:s})),q.source,s=>setQ({source:s})),
+        fromLabel:q.mode==='transfer'?'From':q.mode==='income'?'Into account':'Paid from',
+        accts:accChip(q.acct,id=>setQ({acct:id,to:id===q.to?(S.accounts.find(x=>x.id!==id)||{}).id:q.to})),
+        toAccts:accChip(q.to,id=>setQ({to:id}),q.acct),
+        savWarn:(q.mode==='expense')&&a.role==='Savings'&&amt>0,
+        savWarnStr:`${a.name} ${fmt(ab)} → ${fmt(ab-amt)}`,
+        overWarn:(q.mode!=='income')&&amt>ab&&amt>0,
+        overStr:`This is more than your ${a.name} balance (${fmt(ab)}). You can still save it.`,
+        dates:[['Today',TODAY],['Yesterday',yd],[nice(y2),y2]].map(([label,d])=>Object.assign({label,onClick:()=>setQ({date:d})},chip(q.date===d))),
+        note:q.note,onNote:e=>setQ({note:e.target.value}),
+        keys:['1','2','3','4','5','6','7','8','9','000','0','⌫'].map(k=>({label:k,onClick:()=>{let d=q.digits;if(k==='⌫')d=d.slice(0,-1);else d=(d+k).replace(/^0+/,'').slice(0,12);setQ({digits:d});}})),
+        saveOp:(amt&&(q.mode!=='expense'||q.cat)&&(q.mode!=='transfer'||q.to!==q.acct))?1:0.4,
+        saveLabel:q.editId?'Save changes':q.mode==='expense'?(q.cat?'Save expense':'Pick a category'):q.mode==='income'?'Save income':'Save transfer',
+        save:()=>this.saveQA()};
+    } else v.qa={tabs:[],shortcuts:[],cats:[],sources:[],accts:[],toAccts:[],dates:[],keys:[]};
+
+    const rc=S.recon;
+    if(rc){const a=this.acct(rc.acct),app=this.bal(rc.acct),has=rc.digits!=='',real=Number(rc.digits)||0,diff=real-app;
+      v.recon={name:a.name,realStr:dig(rc.digits),onReal:e=>set({recon:Object.assign({},rc,{digits:e.target.value.replace(/\D/g,'').slice(0,13)})}),
+        appStr:fmt(app),realDisp:has?fmt(real):'—',diffStr:has?(diff>0?'+':'')+fmt(diff):'—',diffColor:!has||diff===0?'var(--ink)':diff<0?'var(--expense)':'var(--income)',
+        explain:!has?'The difference is money you spent or received without logging it.':diff===0?'Everything matches. Nice.':diff<0?`${fmt(-diff)} left the account without being logged. Record it as Untracked, or look for the missing entries yourself.`:`${fmt(diff)} more than expected. Record it as Untracked income, or find the missing entry.`,
+        hasDiff:has&&diff!==0,match:has&&diff===0,
+        record:()=>{set({txns:S.txns.concat([{id:'n'+S.seq,seq:S.seq,type:'adjust',amount:diff,acct:a.id,date:TODAY,note:'Untracked'}]),seq:S.seq+1,accounts:S.accounts.map(x=>x.id===a.id?Object.assign({},x,{lastRec:TODAY}):x),sheet:null,recon:null});this.toast(`Recorded ${fmt(Math.abs(diff))} as Untracked`);},
+        find:()=>{set({sheet:null,recon:null,screen:'txns',filters:{type:'all',acct:a.id,cat:'all',range:'7'}});},
+        markOk:()=>{set({accounts:S.accounts.map(x=>x.id===a.id?Object.assign({},x,{lastRec:TODAY}):x),sheet:null,recon:null});this.toast(a.name+' checked');}};
+    } else v.recon={};
+
+    const ru=S.rule;
+    if(ru){const setR=p=>set({rule:Object.assign({},ru,p)}),ok=ru.name.trim()&&Number(ru.digits);
+      v.rule={title:ru.id?'Edit rule':'New recurring rule',name:ru.name,amtStr:dig(ru.digits),acct:ru.acct,cat:ru.cat,day:String(ru.day),isExpense:ru.type==='expense',canDelete:!!ru.id,saveOp:ok?1:0.4,
+        tabs:seg([{label:'Expense',value:'expense'},{label:'Income',value:'income'}],ru.type,t=>setR({type:t})).map(o=>Object.assign(o,{bg:o.bg==='transparent'?'transparent':'var(--surface)',fg:o.bg==='transparent'?'var(--ink2)':'var(--ink)'})),
+        onName:e=>setR({name:e.target.value}),onAmt:e=>setR({digits:e.target.value.replace(/\D/g,'').slice(0,12)}),
+        onAcct:e=>setR({acct:e.target.value}),onCat:e=>setR({cat:e.target.value}),onDay:e=>setR({day:Number(e.target.value)}),
+        acctOpts:S.accounts.map(a=>({value:a.id,label:a.name})),catOpts:activeCats.map(c=>({value:c.id,label:c.name})),
+        dayOpts:Array.from({length:31},(_,i)=>({value:String(i+1),label:'Every '+(i+1)+(i===0||i===20||i===30?'st':i===1||i===21?'nd':i===2||i===22?'rd':'th')})),
+        del:()=>set({recurring:S.recurring.filter(r=>r.id!==ru.id),sheet:null,rule:null}),
+        save:()=>{if(!ok)return;const r={id:ru.id||'r'+S.seq,name:ru.name.trim(),type:ru.type,amount:Number(ru.digits),acct:ru.acct,cat:ru.type==='expense'?ru.cat:null,day:ru.day,paused:false};
+          set({recurring:ru.id?S.recurring.map(x=>x.id===ru.id?Object.assign({},x,r,{paused:x.paused}):x):S.recurring.concat([r]),seq:S.seq+1,sheet:null,rule:null});}};
+    } else v.rule={tabs:[],acctOpts:[],catOpts:[],dayOpts:[]};
+
+    v.hasToast=!!S.toast;v.toastMsg=S.toast?S.toast.msg:'';v.toastUndo=!!(S.toast&&S.toast.undo);v.undo=()=>this.doUndo();
+
+    // onboarding
+    const ob=S.ob,setO=p=>set({ob:Object.assign({},ob,p)}),setFm=p=>setO({form:Object.assign({},ob.form,p)});
+    const hasSal=ob.accounts.some(a=>a.role==='Salary'),obSav=ob.accounts.filter(a=>a.role==='Savings');
+    const canNext=ob.step!==2||hasSal;
+    const finish=reminder=>{
+      const accounts=ob.accounts.map(a=>({id:a.id,name:a.name,type:a.type,role:a.role,target:null,start:a.bal,lastRec:TODAY}));
+      const base=seed('empty');
+      this.setState({accounts,txns:[],recurring:[],hist:[],pending:null,sweeps:[],cats:base.cats,
+        settings:Object.assign({},base.settings,{payday:ob.payday,salary:Number(ob.salary)||0,defSav:ob.defSav||(obSav[0]||{}).id||null,reminder,lastBackup:null}),
+        screen:'home',scenario:'onboarding'});
+      this.toast('All set. Log your first expense with +');};
+    v.ob={step:ob.step,s1:ob.step===1,s2:ob.step===2,s3:ob.step===3,s4:ob.step===4,
+      stepLabel:'Step '+ob.step+' of 4',dots:[1,2,3,4].map(i=>({bg:i<=ob.step?'var(--ink)':'var(--line)'})),
+      showBack:ob.step>1,back:()=>setO({step:ob.step-1}),nextOp:canNext?1:0.4,
+      nextLabel:ob.step===1?'Get started':ob.step===4?'Finish':'Continue',
+      next:()=>{if(!canNext)return;if(ob.step===4)finish(ob.reminder);else setO({step:ob.step+1,defSav:ob.step===2?(ob.defSav||(obSav[0]||{}).id||null):ob.defSav});},
+      skip:()=>finish(null),
+      accounts:ob.accounts.map((a,i)=>({name:a.name,initials:initials(a.name),meta:a.type+' · '+a.role,balStr:fmt(a.bal),soft:a.role==='Savings'?'var(--savings-soft)':'var(--salary-soft)',color:a.role==='Savings'?'var(--savings)':'var(--salary)',onRemove:()=>setO({accounts:ob.accounts.filter((_,j)=>j!==i)})})),
+      form:{name:ob.form.name,balStr:dig(ob.form.bal)},
+      onName:e=>setFm({name:e.target.value}),onBal:e=>setFm({bal:e.target.value.replace(/\D/g,'').slice(0,13)}),
+      typeOpts:pick(['Bank','E-wallet','Cash'].map(x=>({label:x,value:x})),ob.form.type,x=>setFm({type:x})),
+      roleOpts:['Salary','Savings'].map(x=>{const on=ob.form.role===x,sav=x==='Savings';return {label:x,onClick:()=>setFm({role:x}),bg:on?(sav?'var(--savings-soft)':'var(--salary-soft)'):'var(--surface)',fg:on?(sav?'var(--savings)':'var(--salary)'):'var(--ink2)',border:on?(sav?'var(--savings)':'var(--salary)'):'var(--line)'};}),
+      add:()=>{const n=ob.form.name.trim();if(!n)return;setO({accounts:ob.accounts.concat([{id:'a'+Date.now(),name:n,type:ob.form.type,role:ob.form.role,bal:Number(ob.form.bal)||0}]),form:{name:'',type:ob.form.type,role:hasSal||ob.form.role==='Salary'?'Savings':'Salary',bal:''}});},
+      needSalary:ob.step===2&&!hasSal,
+      dayOpts:Array.from({length:28},(_,i)=>Object.assign({label:String(i+1),onClick:()=>setO({payday:i+1})},chip(ob.payday===i+1))),
+      salaryStr:dig(ob.salary),onSalary:e=>setO({salary:e.target.value.replace(/\D/g,'').slice(0,12)}),
+      savOpts:obSav.map(a=>Object.assign({label:a.name,onClick:()=>setO({defSav:a.id})},chip(ob.defSav===a.id))),noSav:!obSav.length,
+      timeOpts:['19:00','20:00','21:00','21:30','22:00','23:00'].map(t=>Object.assign({label:t,onClick:()=>setO({reminder:t})},chip(ob.reminder===t)))};
+    return v;
+  }
+}
+</script>
+</body>
+</html>
