@@ -11,6 +11,8 @@ npm test          # unit tests for cycles, balances, recurring, sweep, reports, 
 npm run build     # production build in dist/ (static, works from any path)
 ```
 
+Live: https://monosik.github.io/Money_Tracker/ — every push to `main` is tested, built and deployed by `.github/workflows/deploy.yml`.
+
 ## How it works
 
 - **Cycle:** runs payday to payday (`lib/dates.ts › cycleFor`).
