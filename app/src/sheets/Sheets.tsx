@@ -22,7 +22,7 @@ export function SheetHost() {
       <div className="scrim" onClick={app.closeSheet} />
       <div className="sheet" role="dialog" aria-modal="true">
         <div className="grabber" />
-        {s.kind === 'qa' && <QuickAdd edit={s.edit} />}
+        {s.kind === 'qa' && <QuickAdd edit={s.edit} preset={s.preset} />}
         {s.kind === 'more' && <More />}
         {s.kind === 'recon' && <Reconcile acct={s.acct} />}
         {s.kind === 'rule' && <RuleSheet rule={s.rule} />}
@@ -53,16 +53,21 @@ function Reconcile({ acct }: { acct: string }) {
   const { data, today } = app;
   const [digits, setDigits] = useState('');
   const a = acctOf(data, acct);
+  const inv = a.role === 'Investment';
+  const sav = a.role === 'Savings';
   const app_ = app.d.bal(acct);
   const has = digits !== '';
   const real = Number(digits) || 0;
   const diff = real - app_;
   const markChecked = (x: typeof data) => x.accounts.map((y) => (y.id === acct ? { ...y, lastRec: today } : y));
-
-  const record = () => {
-    app.commit((x) => ({ ...x, txns: x.txns.concat([{ id: 'n' + x.seq, seq: x.seq, type: 'adjust', amount: diff, acct, date: today, note: 'Untracked' }]), seq: x.seq + 1, accounts: markChecked(x) }), `Recorded ${fmt(Math.abs(diff))} as Untracked`);
+  const addTxn = (t: { type: 'adjust' | 'revalue' | 'income'; note: string; source?: 'Interest' }, msg: string) => {
+    app.commit((x) => ({ ...x, txns: x.txns.concat([{ id: 'n' + x.seq, seq: x.seq, amount: diff, acct, date: today, ...t }]), seq: x.seq + 1, accounts: markChecked(x) }), msg);
     app.closeSheet();
   };
+
+  const record = () => addTxn({ type: 'adjust', note: 'Untracked' }, `Recorded ${fmt(Math.abs(diff))} as Untracked`);
+  const recordInterest = () => addTxn({ type: 'income', source: 'Interest', note: 'Interest' }, `Recorded ${fmt(diff)} interest`);
+  const recordValue = () => addTxn({ type: 'revalue', note: 'Value update' }, `${a.name} ${diff > 0 ? 'grew' : 'fell'} ${fmt(Math.abs(diff))}`);
   const find = () => app.go('txns', { filters: { type: 'all', acct, cat: 'all', range: '7' } });
   const markOk = () => {
     app.commit((x) => ({ ...x, accounts: markChecked(x) }));
@@ -71,38 +76,50 @@ function Reconcile({ acct }: { acct: string }) {
   };
 
   const explain = !has
-    ? 'The difference is money you spent or received without logging it.'
+    ? inv
+      ? 'The change is your gain or loss since you last updated it. Money you put in or took out should be logged as a transfer.'
+      : 'The difference is money you spent or received without logging it.'
     : diff === 0
       ? 'Everything matches. Nice.'
-      : diff < 0
-        ? `${fmt(-diff)} left the account without being logged. Record it as Untracked, or look for the missing entries yourself.`
-        : `${fmt(diff)} more than expected. Record it as Untracked income, or find the missing entry.`;
+      : inv
+        ? `${a.name} ${diff > 0 ? 'grew' : 'fell'} ${fmt(Math.abs(diff))}. This is recorded as market ${diff > 0 ? 'growth' : 'loss'}, not as spending.`
+        : diff < 0
+          ? `${fmt(-diff)} left the account without being logged. Record it as Untracked, or look for the missing entries yourself.`
+          : sav
+            ? `${fmt(diff)} more than expected. If your bank paid interest, record it as interest. Otherwise record it as Untracked income, or find the missing entry.`
+            : `${fmt(diff)} more than expected. Record it as Untracked income, or find the missing entry.`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ fontSize: 20, fontWeight: 700 }}>Reconcile {a.name}</div>
-      <div style={{ fontSize: 14, color: 'var(--ink2)' }}>Enter the real balance from your bank app.</div>
+      <div style={{ fontSize: 20, fontWeight: 700 }}>{inv ? 'Update value · ' : 'Reconcile '}{a.name}</div>
+      <div style={{ fontSize: 14, color: 'var(--ink2)' }}>{inv ? 'Enter the current value from your investment app.' : 'Enter the real balance from your bank app.'}</div>
       <div className="money-field" style={{ border: '1.5px solid var(--ink)', background: 'var(--bg)', borderRadius: 14 }}>
         <span style={{ fontSize: 18 }}>Rp</span>
-        <input autoFocus value={dig(digits)} onChange={(e) => setDigits(onlyDigits(e.target.value, 13))} inputMode="numeric" placeholder="0" aria-label="Real balance" style={{ padding: '14px 8px', fontSize: 22, fontWeight: 600 }} />
+        <input autoFocus value={dig(digits)} onChange={(e) => setDigits(onlyDigits(e.target.value, 13))} inputMode="numeric" placeholder="0" aria-label={inv ? 'Current value' : 'Real balance'} style={{ padding: '14px 8px', fontSize: 22, fontWeight: 600 }} />
       </div>
       <div style={{ background: 'var(--surface2)', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink2)' }}>Balance in app</span><span>{fmt(app_)}</span></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink2)' }}>Real balance</span><span>{has ? fmt(real) : '—'}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink2)' }}>{inv ? 'Value in app' : 'Balance in app'}</span><span>{fmt(app_)}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink2)' }}>{inv ? 'Current value' : 'Real balance'}</span><span>{has ? fmt(real) : '—'}</span></div>
         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--line)', paddingTop: 8, fontWeight: 700 }}>
-          <span>Difference</span>
+          <span>{inv ? 'Change' : 'Difference'}</span>
           <span style={{ color: !has || diff === 0 ? 'var(--ink)' : diff < 0 ? 'var(--expense)' : 'var(--income)' }}>{has ? (diff > 0 ? '+' : '') + fmt(diff) : '—'}</span>
         </div>
       </div>
       <div style={{ fontSize: 13, color: 'var(--ink2)', lineHeight: 1.45 }}>{explain}</div>
-      {has && diff !== 0 && (
+      {has && diff !== 0 && inv && (
+        <button className="btn" onClick={recordValue} style={{ height: 50, borderRadius: 14, background: 'var(--invest)', color: 'var(--on-accent)' }}>{diff > 0 ? 'Record growth' : 'Record loss'}</button>
+      )}
+      {has && diff > 0 && sav && (
+        <button className="btn" onClick={recordInterest} style={{ height: 50, borderRadius: 14, background: 'var(--savings)', color: 'var(--on-accent)' }}>Record as interest</button>
+      )}
+      {has && diff !== 0 && !inv && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <button className="btn-line" onClick={find} style={{ height: 50, borderRadius: 14 }}>I'll find it</button>
-          <button className="btn-ink" onClick={record} style={{ height: 50, borderRadius: 14 }}>Record as Untracked</button>
+          <button className={sav && diff > 0 ? 'btn-line' : 'btn-ink'} onClick={record} style={{ height: 50, borderRadius: 14 }}>Record as Untracked</button>
         </div>
       )}
       {has && diff === 0 && (
-        <button className="btn" onClick={markOk} style={{ height: 50, borderRadius: 14, background: 'var(--income)', color: 'var(--on-accent)' }}>Balances match · Mark as checked</button>
+        <button className="btn" onClick={markOk} style={{ height: 50, borderRadius: 14, background: 'var(--income)', color: 'var(--on-accent)' }}>{inv ? 'Value unchanged · Mark as checked' : 'Balances match · Mark as checked'}</button>
       )}
     </div>
   );

@@ -3,11 +3,11 @@ import { useApp } from '../ctx';
 import { addDays, nice } from '../lib/dates';
 import { fmt, short } from '../lib/format';
 import { acctOf, catChart, catOf, type IncomeSource, type Txn, type TxnType } from '../lib/model';
-import { chip, chipStyle, Seg } from '../components/ui';
+import { chip, chipStyle, roleColor, Seg } from '../components/ui';
 
 type Mode = Exclude<TxnType, 'adjust'>;
 
-export function QuickAdd({ edit }: { edit?: Txn }) {
+export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'income'; source: IncomeSource; acct: string } }) {
   const app = useApp();
   const { data, d, today } = app;
   const [q, setQ] = useState(() => {
@@ -16,6 +16,7 @@ export function QuickAdd({ edit }: { edit?: Txn }) {
     const last = data.settings.lastAcct;
     const def = (last && data.accounts.some((a) => a.id === last) ? last : (data.accounts.find((a) => a.role === 'Salary') || data.accounts[0])?.id) || '';
     const to = (data.settings.defSav && data.settings.defSav !== def ? data.settings.defSav : data.accounts.find((a) => a.id !== def)?.id) || '';
+    if (preset) return { mode: preset.mode as Mode, digits: '', cat: null as string | null, acct: preset.acct, to, source: preset.source, date: today, note: '' };
     return { mode: 'expense' as Mode, digits: '', cat: null as string | null, acct: def, to, source: 'Salary' as IncomeSource, date: today, note: '' };
   });
   const set = (p: Partial<typeof q>) => setQ({ ...q, ...p });
@@ -57,12 +58,12 @@ export function QuickAdd({ edit }: { edit?: Txn }) {
     <div className="hscroll" style={{ gap: 6, margin: '0 -18px', padding: '0 18px' }}>
       {data.accounts.map((x) => {
         const on = x.id === sel;
-        const sav = x.role === 'Savings';
+        const rc = roleColor(x.role);
         const dis = disabled === x.id;
         return (
-          <button key={x.id} aria-pressed={on} disabled={dis} onClick={() => pick(x.id)} style={{ flex: 'none', border: `1.5px solid ${on ? (sav ? 'var(--savings)' : 'var(--salary)') : 'var(--line)'}`, background: on ? (sav ? 'var(--savings-soft)' : 'var(--salary-soft)') : 'var(--surface)', color: 'var(--ink)', borderRadius: 12, padding: '7px 12px', textAlign: 'left', cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.35 : 1 }}>
+          <button key={x.id} aria-pressed={on} disabled={dis} onClick={() => pick(x.id)} style={{ flex: 'none', border: `1.5px solid ${on ? rc.c : 'var(--line)'}`, background: on ? rc.soft : 'var(--surface)', color: 'var(--ink)', borderRadius: 12, padding: '7px 12px', textAlign: 'left', cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.35 : 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.name}</div>
-            <div style={{ fontSize: 11, color: sav ? 'var(--savings)' : 'var(--salary)', fontWeight: 600, whiteSpace: 'nowrap' }}>{x.role} · {short(Math.max(0, d.bal(x.id)))}</div>
+            <div style={{ fontSize: 11, color: rc.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.role} · {short(Math.max(0, d.bal(x.id)))}</div>
           </button>
         );
       })}
@@ -102,7 +103,7 @@ export function QuickAdd({ edit }: { edit?: Txn }) {
       )}
       {q.mode === 'income' && (
         <div style={{ display: 'flex', gap: 6 }}>
-          {(['Salary', 'Bonus', 'Other'] as const).map((s) => (
+          {(['Salary', 'Bonus', 'Interest', 'Other'] as const).map((s) => (
             <button key={s} onClick={() => set({ source: s })} style={chipStyle(q.source === s, { flex: 1, borderRadius: 999, padding: '9px 0', fontSize: 14 })}>{s}</button>
           ))}
         </div>
@@ -117,10 +118,10 @@ export function QuickAdd({ edit }: { edit?: Txn }) {
           {acctChips(q.to, (id) => set({ to: id }), q.acct)}
         </div>
       )}
-      {q.mode === 'expense' && a.role === 'Savings' && amt > 0 && (
-        <div style={{ background: 'var(--savings-soft)', borderRadius: 12, padding: '10px 12px', fontSize: 13, lineHeight: 1.4, display: 'flex', gap: 10 }}>
-          <span className="dot" style={{ width: 8, height: 8, background: 'var(--savings)', marginTop: 5 }} />
-          <span>This will reduce your savings: <b>{a.name} {fmt(ab)} → {fmt(ab - amt)}</b></span>
+      {q.mode === 'expense' && a.role !== 'Salary' && amt > 0 && (
+        <div style={{ background: roleColor(a.role).soft, borderRadius: 12, padding: '10px 12px', fontSize: 13, lineHeight: 1.4, display: 'flex', gap: 10 }}>
+          <span className="dot" style={{ width: 8, height: 8, background: roleColor(a.role).c, marginTop: 5 }} />
+          <span>This will reduce your {a.role === 'Investment' ? 'investments' : 'savings'}: <b>{a.name} {fmt(ab)} → {fmt(ab - amt)}</b></span>
         </div>
       )}
       {q.mode !== 'income' && amt > 0 && amt > ab && (

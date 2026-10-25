@@ -4,6 +4,7 @@ import { dayDiff } from '../lib/dates';
 import { fmt } from '../lib/format';
 import { acctOf } from '../lib/model';
 import { deco } from '../components/txn';
+import { changeLabel } from '../components/ui';
 
 /** Everything the mobile Home and the desktop Dashboard share. */
 export function homeData(app: App) {
@@ -55,7 +56,9 @@ export function homeData(app: App) {
     .map((a) => ({ a, days: dayDiff(a.lastRec || today, today) }))
     .filter((x) => x.days >= 14)
     .sort((x, y) => y.days - x.days)[0];
-  const recon = stale ? { name: stale.a.name, days: stale.days, open: () => app.openSheet({ kind: 'recon', acct: stale.a.id }) } : null;
+  const recon = stale
+    ? { name: stale.a.name, days: stale.days, invest: stale.a.role === 'Investment', open: () => app.openSheet({ kind: 'recon', acct: stale.a.id }) }
+    : null;
 
   const savSpentLine = d.savSpent ? `−${fmt(d.savSpent)} spent from savings this cycle` : 'Nothing spent from savings this cycle';
   const savSpentColor = d.savSpent ? 'var(--expense)' : 'var(--ink3)';
@@ -63,7 +66,17 @@ export function homeData(app: App) {
     const b = d.bal(a.id);
     const sp = d.savSpentOf(a.id);
     const pct = targetPct(b, a.target);
-    return { id: a.id, name: a.name, balStr: fmt(b), target: a.target, pct, pctStr: pct + '%', targetStr: a.target ? fmt(a.target) : '', spent: sp, spentStr: '−' + fmt(sp), open: () => app.go('acct', { acctId: a.id }) };
+    const interest = d.interestOf(a.id).year;
+    return { id: a.id, name: a.name, balStr: fmt(b), target: a.target, pct, pctStr: pct + '%', targetStr: a.target ? fmt(a.target) : '', spent: sp, spentStr: '−' + fmt(sp), interest, interestStr: '+' + fmt(interest), open: () => app.go('acct', { acctId: a.id }) };
+  });
+  const savInterestLine = d.savInterest ? `+${fmt(d.savInterest)} interest this cycle` : '';
+
+  const invChange = changeLabel(d.invGain, d.invStart, fmt);
+  const invLine = { text: d.invGain ? invChange.text + ' growth this cycle' : 'No value change recorded this cycle', color: invChange.color };
+  const investCards = d.invA.map((a) => {
+    const g = d.growthOf(a.id);
+    const ch = changeLabel(g.gain, g.startValue, fmt);
+    return { id: a.id, name: a.name, balStr: fmt(d.bal(a.id)), gain: g.gain, changeStr: ch.text, changeColor: ch.color, open: () => app.go('acct', { acctId: a.id }) };
   });
 
   const budgetTop = d.activeCats
@@ -74,5 +87,5 @@ export function homeData(app: App) {
 
   const recent = d.sorted.slice(0, 5).map((t) => deco(data, t));
 
-  return { hero, showNothing, onNoSpend, pending, recon, savSpentLine, savSpentColor, savingsCards, budgetTop, recent };
+  return { hero, showNothing, onNoSpend, pending, recon, savSpentLine, savSpentColor, savingsCards, savInterestLine, invLine, investCards, budgetTop, recent };
 }

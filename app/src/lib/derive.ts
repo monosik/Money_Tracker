@@ -1,4 +1,4 @@
-import { cycleFor, dayDiff } from './dates';
+import { addDays, cycleFor, dayDiff } from './dates';
 import { balanceOf, type Category, type Data } from './model';
 
 export type Derived = ReturnType<typeof derive>;
@@ -11,6 +11,8 @@ export function derive(d: Data, today: string) {
   const savA = d.accounts.filter((a) => a.role === 'Savings');
   const salBal = salA.reduce((s, a) => s + bal(a.id), 0);
   const savTotal = savA.reduce((s, a) => s + bal(a.id), 0);
+  const invA = d.accounts.filter((a) => a.role === 'Investment');
+  const invTotal = invA.reduce((s, a) => s + bal(a.id), 0);
   const upcoming = d.recurring.filter((r) => !r.paused && r.type === 'expense' && r.nextDue <= cyc.e);
   const upSum = upcoming.reduce((s, r) => s + r.amount, 0);
   const avail = salBal - upSum;
@@ -23,9 +25,24 @@ export function derive(d: Data, today: string) {
   const savSpentOf = (id: string) =>
     cycTx.filter((t) => t.type === 'expense' && t.acct === id).reduce((s, t) => s + t.amount, 0);
   const savSpent = savA.reduce((s, a) => s + savSpentOf(a.id), 0);
+  const yearStart = today.slice(0, 4) + '-01-01';
+  const isInterest = (t: Data['txns'][number]) => t.type === 'income' && t.source === 'Interest';
+  /** Interest paid into an account this cycle and this calendar year. */
+  const interestOf = (id: string) => ({
+    cycle: cycTx.filter((t) => isInterest(t) && t.acct === id).reduce((s, t) => s + t.amount, 0),
+    year: d.txns.filter((t) => isInterest(t) && t.acct === id && t.date >= yearStart && t.date <= today).reduce((s, t) => s + t.amount, 0),
+  });
+  const savInterest = savA.reduce((s, a) => s + interestOf(a.id).cycle, 0);
+  /** Market growth of an investment this cycle, and its value when the cycle began. */
+  const growthOf = (id: string) => ({
+    gain: cycTx.filter((t) => t.type === 'revalue' && t.acct === id).reduce((s, t) => s + t.amount, 0),
+    startValue: balanceOf(d, id, addDays(cyc.s, -1)),
+  });
+  const invGain = invA.reduce((s, a) => s + growthOf(a.id).gain, 0);
+  const invStart = invA.reduce((s, a) => s + growthOf(a.id).startValue, 0);
   const sorted = d.txns.slice().sort((a, b) => b.date.localeCompare(a.date) || b.seq - a.seq);
   const activeCats = d.cats.filter((c) => !c.archived);
-  return { cyc, bal, salA, savA, salBal, savTotal, upSum, avail, daysLeft, cycTx, spentBy, savSpentOf, savSpent, sorted, activeCats };
+  return { cyc, bal, salA, savA, invA, salBal, savTotal, invTotal, interestOf, savInterest, growthOf, invGain, invStart, upSum, avail, daysLeft, cycTx, spentBy, savSpentOf, savSpent, sorted, activeCats };
 }
 
 export interface BudgetRow {

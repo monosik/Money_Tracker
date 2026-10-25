@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import type { Role } from '../lib/model';
 
 export const SEL = { bg: 'var(--ink)', fg: 'var(--surface)', border: 'var(--ink)' };
 export const UNSEL = { bg: 'var(--surface)', fg: 'var(--ink)', border: 'var(--line)' };
@@ -10,12 +11,29 @@ export const chipStyle = (on: boolean, extra?: CSSProperties): CSSProperties => 
   return { border: `1px solid ${c.border}`, background: c.bg, color: c.fg, cursor: 'pointer', ...extra };
 };
 
-/** Role-colored selection (Salary / Savings accent). */
-export const roleStyle = (on: boolean, savings: boolean) => ({
-  bg: on ? (savings ? 'var(--savings-soft)' : 'var(--salary-soft)') : 'var(--surface)',
-  fg: on ? (savings ? 'var(--savings)' : 'var(--salary)') : 'var(--ink2)',
-  border: on ? (savings ? 'var(--savings)' : 'var(--salary)') : 'var(--line)',
-});
+/** Accent for each account role: Salary, Savings, Investment. */
+export const roleColor = (role: Role) =>
+  role === 'Savings'
+    ? { c: 'var(--savings)', soft: 'var(--savings-soft)' }
+    : role === 'Investment'
+      ? { c: 'var(--invest)', soft: 'var(--invest-soft)' }
+      : { c: 'var(--salary)', soft: 'var(--salary-soft)' };
+
+/** Role-colored selection. */
+export const roleStyle = (on: boolean, role: Role) => {
+  const r = roleColor(role);
+  return { bg: on ? r.soft : 'var(--surface)', fg: on ? r.c : 'var(--ink2)', border: on ? r.c : 'var(--line)' };
+};
+
+/** "+Rp120.000 (+1,2%)" style change label with its color. */
+export const changeLabel = (amount: number, base: number, fmtFn: (n: number) => string) => {
+  const pct = base > 0 ? (amount / base) * 100 : 0;
+  const pctStr = base > 0 ? ` (${amount >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(1).replace('.', ',')}%)` : '';
+  return {
+    text: (amount > 0 ? '+' : '') + fmtFn(amount) + pctStr,
+    color: amount > 0 ? 'var(--income)' : amount < 0 ? 'var(--expense)' : 'var(--ink3)',
+  };
+};
 
 /** Segmented control inside a sheet (selected = raised surface). */
 export function Seg<T extends string>({ opts, value, onChange, font }: { opts: { label: string; value: T }[]; value: T; onChange: (v: T) => void; font?: number }) {

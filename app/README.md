@@ -20,6 +20,9 @@ Live: https://monosik.github.io/Money_Tracker/ — every push to `main` is teste
 - **Recurring rules:** each stores `nextDue`. When the app opens or the date changes, due items are logged as auto-logged transactions (`lib/maintenance.ts`). Paused rules skip ahead without logging.
 - **Month-end sweep:** when a new cycle starts, the primary Salary account's (the first one) balance at the end of the last cycle becomes a pending transfer to the default savings account. Nothing changes until you tap **Done**.
 - **Reconcile:** records the difference as an `adjust` ("Untracked") transaction. Negative ones count as "Unlogged spending" in Reports.
+- **Account roles:** Salary, Savings and Investment. Investments show on Home and in Reports separately from savings.
+- **Interest:** an income source. Log it from a savings account's detail screen, or choose **Record as interest** when a reconcile finds the bank holds more than the app. Recurring rules named "interest" or "bunga" log as interest.
+- **Investment growth:** **Update value** on an investment records the change as a `revalue` transaction, a market gain or loss that doesn't count as spending or as untracked money. Growth per cycle uses only those, so money you transfer in isn't counted as growth.
 - **Layout:** below 1024px it's the mobile app with bottom nav. At 1024px and wider, a sidebar plus the desktop Dashboard; other screens show in a centered column.
 
 ## Limits

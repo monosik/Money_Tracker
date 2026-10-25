@@ -1,11 +1,11 @@
 import { createContext, useContext } from 'react';
 import type { Derived } from './lib/derive';
-import type { Data, Rule, Txn } from './lib/model';
+import type { Data, IncomeSource, Rule, Txn } from './lib/model';
 
 export type Screen = 'onboarding' | 'home' | 'txns' | 'reports' | 'accounts' | 'acct' | 'budgets' | 'recurring' | 'settings';
 
 export type Sheet =
-  | { kind: 'qa'; edit?: Txn }
+  | { kind: 'qa'; edit?: Txn; preset?: { mode: 'income'; source: IncomeSource; acct: string } }
   | { kind: 'more' }
   | { kind: 'recon'; acct: string }
   | { kind: 'rule'; rule: Rule | null }

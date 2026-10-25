@@ -12,6 +12,8 @@
   --salary-soft: oklch(0.95 0.025 268);
   --savings: oklch(0.52 0.1 192);
   --savings-soft: oklch(0.95 0.025 192);
+  --invest: oklch(0.52 0.14 320);
+  --invest-soft: oklch(0.95 0.025 320);
   --income: oklch(0.52 0.13 150);
   --income-soft: oklch(0.95 0.035 150);
   --expense: oklch(0.55 0.17 28);
@@ -35,6 +37,8 @@
   --salary-soft: oklch(0.3 0.06 268);
   --savings: oklch(0.78 0.1 192);
   --savings-soft: oklch(0.3 0.045 192);
+  --invest: oklch(0.78 0.12 320);
+  --invest-soft: oklch(0.3 0.05 320);
   --income: oklch(0.78 0.14 150);
   --income-soft: oklch(0.3 0.05 150);
   --expense: oklch(0.74 0.14 28);

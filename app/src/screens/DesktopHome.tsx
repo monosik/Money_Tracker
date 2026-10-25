@@ -61,7 +61,8 @@ export function DesktopHome() {
           <div className="card" style={{ borderRadius: 22, padding: 20 }}>
             <div className="eyebrow" style={{ color: 'var(--savings)' }}>Total savings</div>
             <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 2px' }}>{fmt(app.d.savTotal)}</div>
-            <div style={{ fontSize: 14, color: h.savSpentColor, marginBottom: 14 }}>{h.savSpentLine}</div>
+            <div style={{ fontSize: 14, color: h.savSpentColor, marginBottom: h.savInterestLine ? 2 : 14 }}>{h.savSpentLine}</div>
+            {h.savInterestLine && <div style={{ fontSize: 14, color: 'var(--income)', marginBottom: 14 }}>{h.savInterestLine}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {h.savingsCards.map((s) => (
                 <div key={s.id} role="button" tabIndex={0} onClick={s.open} onKeyDown={(e) => e.key === 'Enter' && s.open()} style={{ border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
@@ -73,10 +74,26 @@ export function DesktopHome() {
                     </>
                   ) : null}
                   {s.spent > 0 && <div style={{ fontSize: 12, color: 'var(--expense)', marginTop: 4 }}>{s.spentStr} spent this cycle</div>}
+                  {s.interest > 0 && <div style={{ fontSize: 12, color: 'var(--income)', marginTop: 4 }}>{s.interestStr} interest this year</div>}
                 </div>
               ))}
             </div>
           </div>
+          {h.investCards.length > 0 && (
+            <div className="card" style={{ borderRadius: 22, padding: 20 }}>
+              <div className="eyebrow" style={{ color: 'var(--invest)' }}>Investments</div>
+              <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 2px' }}>{fmt(app.d.invTotal)}</div>
+              <div style={{ fontSize: 14, color: h.invLine.color, marginBottom: 14 }}>{h.invLine.text}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {h.investCards.map((s) => (
+                  <div key={s.id} role="button" tabIndex={0} onClick={s.open} onKeyDown={(e) => e.key === 'Enter' && s.open()} style={{ border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span style={{ color: 'var(--ink2)' }}>{s.name}</span><span style={{ fontWeight: 600 }}>{s.balStr}</span></div>
+                    <div style={{ fontSize: 12, color: s.changeColor, marginTop: 4 }}>{s.gain ? s.changeStr + ' this cycle' : 'No change this cycle'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {h.pending && (
             <div style={{ background: 'var(--savings-soft)', border: '1px solid var(--line)', borderRadius: 22, padding: 18 }}>
               <div className="eyebrow" style={{ color: 'var(--savings)', marginBottom: 6 }}>Month-end sweep</div>
@@ -90,7 +107,7 @@ export function DesktopHome() {
           )}
           {h.recon && (
             <div className="card" role="button" tabIndex={0} onClick={h.recon.open} onKeyDown={(e) => e.key === 'Enter' && h.recon!.open()} style={{ borderRadius: 22, padding: 18, fontSize: 14, lineHeight: 1.45, cursor: 'pointer' }}>
-              <b>{h.recon.name}</b> hasn't been checked in {h.recon.days} days. Compare it with your bank app to catch anything you forgot.
+              <b>{h.recon.name}</b> {h.recon.invest ? `hasn't been updated in ${h.recon.days} days. Check its value in your investment app.` : `hasn't been checked in ${h.recon.days} days. Compare it with your bank app to catch anything you forgot.`}
             </div>
           )}
           {h.showNothing && (

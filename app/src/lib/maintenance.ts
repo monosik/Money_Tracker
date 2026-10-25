@@ -1,5 +1,8 @@
 import { cycleFor, nextMonthDue } from './dates';
-import { balanceOf, primarySalary, type Data, type Txn } from './model';
+import { balanceOf, primarySalary, type Data, type IncomeSource, type Txn } from './model';
+
+const incomeSource = (name: string): IncomeSource =>
+  /salary|gaji|payroll/i.test(name) ? 'Salary' : /interest|bunga/i.test(name) ? 'Interest' : /bonus/i.test(name) ? 'Bonus' : 'Other';
 
 /**
  * Brings stored data up to `today`:
@@ -32,7 +35,7 @@ export function runMaintenance(d: Data, today: string): Data {
           ruleId: r.id,
           ...(r.type === 'expense'
             ? { cat: r.cat || 'other' }
-            : { source: /salary|gaji|payroll/i.test(r.name) ? ('Salary' as const) : ('Other' as const) }),
+            : { source: incomeSource(r.name) }),
         });
       }
       due = nextMonthDue(due, r.day);

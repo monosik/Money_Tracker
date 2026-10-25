@@ -33,7 +33,7 @@ export function transactionsCsv(d: Data) {
   const rows = header.concat(
     sorted.map((t) => [
       t.date,
-      t.type === 'adjust' ? 'untracked' : t.type,
+      t.type === 'adjust' ? 'untracked' : t.type === 'revalue' ? 'value_change' : t.type === 'income' && t.source === 'Interest' ? 'interest' : t.type,
       t.type === 'expense' ? -t.amount : t.amount,
       acctOf(d, t.acct).name,
       t.to ? acctOf(d, t.to).name : '',

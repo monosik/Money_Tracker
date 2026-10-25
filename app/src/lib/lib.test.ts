@@ -148,3 +148,43 @@ describe('backup', () => {
     expect(transactionsCsv(d)).toBe('date,type,amount,account,to_account,category,note\n2026-10-01,expense,-1000,BCA Salary,,Food,"Lunch, ""big"""');
   });
 });
+
+describe('interest and investments', () => {
+  function withInvest(): Data {
+    const d = sample();
+    d.accounts.push({ id: 'bibit', name: 'Bibit', type: 'E-wallet', role: 'Investment', start: 1_000_000, target: null, lastRec: '2026-10-01' });
+    d.txns = [
+      { id: 'i1', seq: 1, type: 'income', source: 'Interest', amount: 25_000, acct: 'may', date: '2026-10-01', note: 'Interest' },
+      { id: 'i2', seq: 2, type: 'income', source: 'Interest', amount: 20_000, acct: 'may', date: '2026-08-01', note: 'Interest' },
+      { id: 'v1', seq: 3, type: 'revalue', amount: 50_000, acct: 'bibit', date: '2026-09-10', note: 'Value update' },
+      { id: 'v2', seq: 4, type: 'transfer', amount: 500_000, acct: 'bca', to: 'bibit', date: '2026-10-02', note: 'Top up' },
+      { id: 'v3', seq: 5, type: 'revalue', amount: -30_000, acct: 'bibit', date: '2026-10-12', note: 'Value update' },
+    ];
+    return d;
+  }
+
+  it('counts revaluations in balance but not in spending or untracked', () => {
+    const d = withInvest();
+    expect(balanceOf(d, 'bibit')).toBe(1_520_000);
+    const x = derive(d, '2026-10-14');
+    expect(x.invTotal).toBe(1_520_000);
+    expect(x.spentBy).toEqual({});
+    // Growth excludes the top-up transfer; start value is the value before the cycle began.
+    expect(x.growthOf('bibit')).toEqual({ gain: -30_000, startValue: 1_050_000 });
+    const r = cycleStats(d, '2026-10-14', 0);
+    expect(r).toMatchObject({ total: 0, untracked: 0, interest: 25_000, invGain: -30_000, invValue: 1_520_000 });
+    expect(cycleStats(d, '2026-10-14', -1)).toMatchObject({ invGain: 50_000, invValue: 1_050_000 });
+  });
+
+  it('tracks interest per account this cycle and this year', () => {
+    const x = derive(withInvest(), '2026-10-14');
+    expect(x.interestOf('may')).toEqual({ cycle: 25_000, year: 45_000 });
+    expect(x.savInterest).toBe(25_000);
+  });
+
+  it('logs recurring interest rules as Interest income', () => {
+    const d = sample();
+    d.recurring = [{ id: 'r1', name: 'Bunga deposito', type: 'income', amount: 40_000, acct: 'may', cat: null, day: 1, paused: false, nextDue: '2026-10-01' }];
+    expect(runMaintenance(d, '2026-10-14').txns[0]).toMatchObject({ source: 'Interest', amount: 40_000 });
+  });
+});

@@ -1,7 +1,8 @@
-export type Role = 'Salary' | 'Savings';
+export type Role = 'Salary' | 'Savings' | 'Investment';
 export type AcctType = 'Bank' | 'E-wallet' | 'Cash';
-export type TxnType = 'expense' | 'income' | 'transfer' | 'adjust';
-export type IncomeSource = 'Salary' | 'Bonus' | 'Other';
+/** `adjust` = untracked difference found by reconciling; `revalue` = market gain/loss on an investment. */
+export type TxnType = 'expense' | 'income' | 'transfer' | 'adjust' | 'revalue';
+export type IncomeSource = 'Salary' | 'Bonus' | 'Interest' | 'Other';
 export type ThemePref = 'system' | 'light' | 'dark';
 
 export interface Account {
@@ -28,7 +29,7 @@ export interface Txn {
   /** Insertion order, used to sort same-day entries. */
   seq: number;
   type: TxnType;
-  /** Always positive, except adjustments, which are signed. */
+  /** Always positive, except adjustments and revaluations, which are signed. */
   amount: number;
   acct: string;
   to?: string;
@@ -134,7 +135,7 @@ export function netOf(id: string, txns: Txn[], upTo?: string) {
   for (const t of txns) {
     if (upTo && t.date > upTo) continue;
     if (t.type === 'expense' && t.acct === id) s -= t.amount;
-    else if ((t.type === 'income' || t.type === 'adjust') && t.acct === id) s += t.amount;
+    else if ((t.type === 'income' || t.type === 'adjust' || t.type === 'revalue') && t.acct === id) s += t.amount;
     else if (t.type === 'transfer') {
       if (t.acct === id) s -= t.amount;
       if (t.to === id) s += t.amount;

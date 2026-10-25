@@ -64,8 +64,10 @@ export function Home() {
       {h.recon && (
         <div className="card" style={{ borderRadius: 20, padding: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
           <span className="dot" style={{ width: 10, height: 10, background: 'var(--warn)' }} />
-          <div style={{ flex: 1, fontSize: 14, lineHeight: 1.4 }}><b>{h.recon.name}</b> hasn't been checked in {h.recon.days} days. Compare it with your bank app.</div>
-          <button className="btn-soft" onClick={h.recon.open} style={{ borderRadius: 12, padding: '0 14px', height: 40 }}>Reconcile</button>
+          <div style={{ flex: 1, fontSize: 14, lineHeight: 1.4 }}>
+            <b>{h.recon.name}</b> {h.recon.invest ? `hasn't been updated in ${h.recon.days} days. Check its value in your investment app.` : `hasn't been checked in ${h.recon.days} days. Compare it with your bank app.`}
+          </div>
+          <button className="btn-soft" onClick={h.recon.open} style={{ borderRadius: 12, padding: '0 14px', height: 40, whiteSpace: 'nowrap' }}>{h.recon.invest ? 'Update' : 'Reconcile'}</button>
         </div>
       )}
 
@@ -78,6 +80,7 @@ export function Home() {
           <button className="link" onClick={() => app.go('accounts')} style={{ padding: '4px 0' }}>Accounts ›</button>
         </div>
         <div style={{ padding: '0 18px', marginTop: 4, fontSize: 14, color: h.savSpentColor }}>{h.savSpentLine}</div>
+        {h.savInterestLine && <div style={{ padding: '0 18px', marginTop: 2, fontSize: 14, color: 'var(--income)' }}>{h.savInterestLine}</div>}
         {h.savingsCards.length > 0 ? (
           <div className="hscroll" style={{ gap: 10, padding: '14px 18px 2px' }}>
             {h.savingsCards.map((s) => (
@@ -93,6 +96,7 @@ export function Home() {
                   <div style={{ fontSize: 12, color: 'var(--ink3)' }}>No target set · <span style={{ color: 'var(--savings)' }}>Set one</span></div>
                 )}
                 {s.spent > 0 && <div style={{ fontSize: 12, color: 'var(--expense)', marginTop: 6 }}>{s.spentStr} spent this cycle</div>}
+                {s.interest > 0 && <div style={{ fontSize: 12, color: 'var(--income)', marginTop: 6 }}>{s.interestStr} interest this year</div>}
               </div>
             ))}
           </div>
@@ -100,6 +104,28 @@ export function Home() {
           <div style={{ padding: '12px 18px 0', fontSize: 14, color: 'var(--ink2)', lineHeight: 1.45 }}>No savings accounts yet. Add one in Accounts to see your savings here.</div>
         )}
       </div>
+
+      {h.investCards.length > 0 && (
+        <div className="card" style={{ borderRadius: 24, padding: '18px 0 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 18px' }}>
+            <div>
+              <div className="eyebrow" style={{ color: 'var(--invest)' }}>Investments</div>
+              <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-.02em', marginTop: 4 }}>{fmt(app.d.invTotal)}</div>
+            </div>
+            <button className="link" onClick={() => app.go('reports')} style={{ padding: '4px 0' }}>Growth ›</button>
+          </div>
+          <div style={{ padding: '0 18px', marginTop: 4, fontSize: 14, color: h.invLine.color }}>{h.invLine.text}</div>
+          <div className="hscroll" style={{ gap: 10, padding: '14px 18px 2px' }}>
+            {h.investCards.map((s) => (
+              <div key={s.id} role="button" tabIndex={0} onClick={s.open} onKeyDown={(e) => e.key === 'Enter' && s.open()} style={{ flex: 'none', width: 200, border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 16, padding: 14, cursor: 'pointer' }}>
+                <div style={{ fontSize: 13, color: 'var(--ink2)' }}>{s.name}</div>
+                <div style={{ fontSize: 19, fontWeight: 600, margin: '4px 0 6px' }}>{s.balStr}</div>
+                <div style={{ fontSize: 12, color: s.changeColor }}>{s.gain ? s.changeStr + ' this cycle' : 'No change this cycle'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ borderRadius: 24, padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>

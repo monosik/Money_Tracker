@@ -11,6 +11,8 @@ const TYPES = [
   { label: 'Expenses', value: 'expense' },
   { label: 'Income', value: 'income' },
   { label: 'Transfers', value: 'transfer' },
+  { label: 'Interest', value: 'interest' },
+  { label: 'Value updates', value: 'revalue' },
   { label: 'Untracked', value: 'adjust' },
 ];
 
@@ -30,7 +32,7 @@ export function Transactions() {
   const filt = d.sorted.filter(
     (t) =>
       t.date >= from &&
-      (F.type === 'all' || t.type === F.type) &&
+      (F.type === 'all' || t.type === F.type || (F.type === 'interest' && t.type === 'income' && t.source === 'Interest')) &&
       (F.acct === 'all' || t.acct === F.acct || t.to === F.acct) &&
       (F.cat === 'all' || t.cat === F.cat),
   );
@@ -86,7 +88,7 @@ export function Transactions() {
             <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
               {g.items.map((t, i) => {
                 const v = deco(data, t);
-                const canEdit = t.type !== 'adjust';
+                const canEdit = t.type !== 'adjust' && t.type !== 'revalue';
                 const on = swiped === t.id;
                 return (
                   <div key={t.id} style={{ position: 'relative', borderTop: i ? '1px solid var(--line)' : 'none' }}>

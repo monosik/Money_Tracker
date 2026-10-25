@@ -4,7 +4,7 @@ import { cycleFor, firstDueAfter } from '../lib/dates';
 import { dig, fmt, initials, onlyDigits, uid } from '../lib/format';
 import { emptyData, type AcctType, type Data, type Role } from '../lib/model';
 import { requestNotif } from '../lib/notify';
-import { chipStyle, roleStyle } from '../components/ui';
+import { chipStyle, roleColor, roleStyle } from '../components/ui';
 import { REMINDER_TIMES } from './Settings';
 
 interface ObAcct {
@@ -39,8 +39,8 @@ export function AccountForm({ onAdd, defaultRole, withTarget }: { onAdd: (a: ObA
         ))}
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
-        {(['Salary', 'Savings'] as const).map((x) => {
-          const c = roleStyle(role === x, x === 'Savings');
+        {(['Salary', 'Savings', 'Investment'] as const).map((x) => {
+          const c = roleStyle(role === x, x);
           return (
             <button key={x} onClick={() => setRole(x)} style={{ flex: 1, border: `1px solid ${c.border}`, background: c.bg, color: c.fg, borderRadius: 10, padding: '9px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{x}</button>
           );
@@ -129,12 +129,12 @@ export function Onboarding() {
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
           <h1 style={h1}>Add your accounts</h1>
-          <p style={lead}>Banks, e-wallets or cash. Mark one as Salary — that's where your pay lands.</p>
+          <p style={lead}>Banks, e-wallets, cash or investment apps. Mark one as Salary — that's where your pay lands.</p>
           {accounts.map((a) => {
-            const s = a.role === 'Savings';
+            const rc = roleColor(a.role);
             return (
               <div key={a.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, borderRadius: 14, padding: '12px 14px' }}>
-                <span style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flex: 'none', background: s ? 'var(--savings-soft)' : 'var(--salary-soft)', color: s ? 'var(--savings)' : 'var(--salary)' }}>{initials(a.name)}</span>
+                <span style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flex: 'none', background: rc.soft, color: rc.c }}>{initials(a.name)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600 }}>{a.name}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{a.type} · {a.role}</div></div>
                 <div style={{ fontWeight: 600 }}>{fmt(a.bal)}</div>
                 <button aria-label={'Remove ' + a.name} onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))} style={{ border: 0, background: 'none', color: 'var(--ink3)', cursor: 'pointer', fontSize: 18, padding: '4px 6px' }}>×</button>

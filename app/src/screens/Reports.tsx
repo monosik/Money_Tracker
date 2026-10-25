@@ -3,6 +3,7 @@ import { useApp } from '../ctx';
 import { fmt, short } from '../lib/format';
 import { catChart, catOf } from '../lib/model';
 import { lastCycles } from '../lib/reports';
+import { changeLabel } from '../components/ui';
 
 const N = 6;
 
@@ -22,12 +23,15 @@ export function Reports() {
     return s;
   });
   const maxB = Math.max(1, ...all.map((c) => c.total));
-  const line = all.map((c) => c.savings);
-  const lmin = Math.min(...line);
-  const lmax = Math.max(...line);
-  const linePts = line
-    .map((x, i) => `${((i * 300) / (line.length - 1)).toFixed(1)},${(92 - (lmax === lmin ? 0.5 : (x - lmin) / (lmax - lmin)) * 80).toFixed(1)}`)
-    .join(' ');
+  const points = (line: number[]) => {
+    const lmin = Math.min(...line);
+    const lmax = Math.max(...line);
+    return line.map((x, i) => `${((i * 300) / (line.length - 1)).toFixed(1)},${(92 - (lmax === lmin ? 0.5 : (x - lmin) / (lmax - lmin)) * 80).toFixed(1)}`).join(' ');
+  };
+  const linePts = points(all.map((c) => c.savings));
+  const invPts = points(all.map((c) => c.invValue));
+  const hasInv = app.d.invA.length > 0;
+  const invAll = all.reduce((s, c) => s + c.invGain, 0);
   const salPct = R.total ? Math.round(((R.total - R.fromSav) / R.total) * 100) : 100;
   const canPrev = off > -(N - 1);
   const canNext = off < 0;
@@ -112,7 +116,31 @@ export function Reports() {
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink3)', marginTop: 6 }}>
           {all.map((c) => <span key={c.cyc.s}>{c.cyc.bar}</span>)}
         </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)', fontSize: 14 }}>
+          <span style={{ color: 'var(--ink2)' }}>Interest earned · {R.cyc.label}</span>
+          <span style={{ fontWeight: 600, color: R.interest ? 'var(--income)' : 'var(--ink3)' }}>{R.interest ? '+' + fmt(R.interest) : fmt(0)}</span>
+        </div>
       </div>
+      {hasInv && (
+        <div className="card" style={{ borderRadius: 22, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+            <span style={{ fontWeight: 600 }}>Investment growth</span>
+            <span style={{ fontSize: 14, color: 'var(--invest)', fontWeight: 600 }}>{fmt(app.d.invTotal)}</span>
+          </div>
+          <div style={{ fontSize: 13, color: changeLabel(invAll, 0, fmt).color, marginBottom: 10 }}>{(invAll > 0 ? '+' : '') + fmt(invAll)} market change over 6 cycles</div>
+          <svg viewBox="0 0 300 100" role="img" aria-label="Investment value at the end of each cycle" style={{ width: '100%', height: 110, display: 'block', overflow: 'visible' }}>
+            <polyline points={invPts} fill="none" stroke="var(--invest)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${N},1fr)`, marginTop: 6, textAlign: 'center' }}>
+            {all.map((c, i) => (
+              <div key={c.cyc.s} style={{ textAlign: i === 0 ? 'left' : i === N - 1 ? 'right' : 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--ink3)' }}>{c.cyc.bar}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: changeLabel(c.invGain, 0, short).color }}>{c.invGain ? (c.invGain > 0 ? '+' : '−') + short(Math.abs(c.invGain)) : '–'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
