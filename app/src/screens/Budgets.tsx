@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useApp } from '../ctx';
 import { budgetRow } from '../lib/derive';
 import { dig, fmt, onlyDigits } from '../lib/format';
-import { catChart } from '../lib/model';
-import { Bar, divider } from '../components/ui';
+import { catBg, catFg } from '../lib/model';
+import { Bar, CatGlyph, catLabel, divider } from '../components/ui';
 
 export function Budgets() {
   const app = useApp();
@@ -46,8 +46,10 @@ export function Budgets() {
           return (
             <div key={c.id} style={{ padding: '14px 16px', borderTop: divider(i) }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="dot" style={{ width: 10, height: 10, background: catChart(c.id) }} />
-                <span style={{ flex: 1, fontWeight: 600 }}>{c.name}</span>
+                <span className="tile" style={{ width: 28, height: 28, borderRadius: 9, background: catBg(c.id), color: catFg(c.id) }}>
+                  <CatGlyph cat={c} size={16} />
+                </span>
+                <span style={{ flex: 1, fontWeight: 600 }}>{catLabel(c.name)}</span>
                 {!editing && <span style={{ fontSize: 14, color: c.budget ? r.statusColor : 'var(--ink3)' }}>{right}</span>}
                 {editing && (
                   <div className="money-field" style={{ background: 'var(--bg)', borderRadius: 10, padding: '0 10px', width: 150 }}>
@@ -58,8 +60,8 @@ export function Budgets() {
               </div>
               {!editing && c.budget && (
                 <>
-                  <Bar pct={r.barPct} color={r.barColor} style={{ margin: '10px 0 6px 20px' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink3)', marginLeft: 20 }}>
+                  <Bar pct={r.barPct} color={r.barColor} style={{ margin: '10px 0 6px 38px' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink3)', marginLeft: 38 }}>
                     <span>{fmt(sp)} spent · {r.pctStr}</span>
                     <span style={{ color: r.statusColor }}>{remain}</span>
                   </div>

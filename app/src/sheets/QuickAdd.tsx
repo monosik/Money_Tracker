@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../ctx';
-import { addDays, nice } from '../lib/dates';
+import { addDays } from '../lib/dates';
 import { fmt, short } from '../lib/format';
-import { acctOf, catChart, catOf, type IncomeSource, type Txn, type TxnType } from '../lib/model';
-import { chip, chipStyle, roleColor, Seg } from '../components/ui';
+import { acctOf, catFg, catOf, type IncomeSource, type Txn, type TxnType } from '../lib/model';
+import { acctIcon, CatGlyph, catLabel, chip, chipStyle, roleColor, roleIcon, Seg } from '../components/ui';
+import { Icon } from '../components/Icon';
 
 type Mode = Exclude<TxnType, 'adjust'>;
 
@@ -55,15 +56,18 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
   };
 
   const acctChips = (sel: string, pick: (id: string) => void, disabled?: string) => (
-    <div className="hscroll" style={{ gap: 6, margin: '0 -18px', padding: '0 18px' }}>
+    <div className="hscroll" data-drag="1" style={{ gap: 6, margin: '0 -18px', padding: '0 18px' }}>
       {data.accounts.map((x) => {
         const on = x.id === sel;
         const rc = roleColor(x.role);
         const dis = disabled === x.id;
         return (
-          <button key={x.id} aria-pressed={on} disabled={dis} onClick={() => pick(x.id)} style={{ flex: 'none', border: `1.5px solid ${on ? rc.c : 'var(--line)'}`, background: on ? rc.soft : 'var(--surface)', color: 'var(--ink)', borderRadius: 12, padding: '7px 12px', textAlign: 'left', cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.35 : 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.name}</div>
-            <div style={{ fontSize: 11, color: rc.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.role} · {short(Math.max(0, d.bal(x.id)))}</div>
+          <button key={x.id} aria-pressed={on} disabled={dis} onClick={() => pick(x.id)} style={{ flex: 'none', border: `1.5px solid ${on ? rc.c : 'var(--line)'}`, background: on ? rc.soft : 'var(--surface)', color: 'var(--ink)', borderRadius: 12, padding: '7px 12px', textAlign: 'left', cursor: dis ? 'default' : 'pointer', opacity: dis ? 0.35 : 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Icon name={acctIcon(x)} size={22} style={{ color: rc.c }} />
+            <span>
+              <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.name}</div>
+              <div style={{ fontSize: 12, color: rc.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{x.role} · {short(Math.max(0, d.bal(x.id)))}</div>
+            </span>
           </button>
         );
       })}
@@ -71,9 +75,9 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
   );
 
   const yd = addDays(today, -1);
-  const y2 = addDays(today, -2);
-  const dates: [string, string][] = [['Today', today], ['Yesterday', yd], [nice(y2), y2]];
-  if (!dates.some(([, dt]) => dt === q.date)) dates.push([nice(q.date), q.date]);
+  const dates: [string, string][] = [['Today', today], ['Yesterday', yd]];
+  const otherDay = q.date !== today && q.date !== yd;
+  const oc = chip(otherDay);
 
   const pressKey = (k: string) => {
     let dg = q.digits;
@@ -84,7 +88,7 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <Seg font={14} value={q.mode} onChange={(m) => set({ mode: m })} opts={[{ label: 'Expense', value: 'expense' }, { label: 'Income', value: 'income' }, { label: 'Transfer', value: 'transfer' }]} />
+      <Seg font={14} value={q.mode} onChange={(m) => set({ mode: m })} opts={[{ label: 'Expense', value: 'expense', icon: 'spend' }, { label: 'Income', value: 'income', icon: 'income' }, { label: 'Transfer', value: 'transfer', icon: 'transfer' }]} />
       <div aria-live="polite" style={{ textAlign: 'center', fontSize: 42, fontWeight: 700, letterSpacing: '-.03em', color: amt ? 'var(--ink)' : 'var(--ink3)', padding: '2px 0' }}>{fmt(amt)}</div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
         {([['+10rb', 10000], ['+50rb', 50000], ['+100rb', 100000]] as const).map(([label, n]) => (
@@ -92,11 +96,11 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
         ))}
       </div>
       {q.mode === 'expense' && (
-        <div className="hscroll" style={{ gap: 6, margin: '0 -18px', padding: '0 18px' }}>
+        <div className="hscroll" data-drag="1" style={{ gap: 6, margin: '0 -18px', padding: '0 18px' }}>
           {cats.map((c) => (
             <button key={c.id} aria-pressed={c.id === q.cat} onClick={() => set({ cat: c.id })} style={chipStyle(c.id === q.cat, { flex: 'none', borderRadius: 999, padding: '9px 14px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' })}>
-              <span className="dot" style={{ width: 8, height: 8, background: catChart(c.id) }} />
-              {c.name}
+              <span style={{ color: q.cat === c.id ? 'inherit' : catFg(c.id), display: 'flex' }}><CatGlyph cat={c} size={17} /></span>
+              {catLabel(c.name)}
             </button>
           ))}
         </div>
@@ -120,13 +124,13 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
       )}
       {q.mode === 'expense' && a.role !== 'Salary' && amt > 0 && (
         <div style={{ background: roleColor(a.role).soft, borderRadius: 12, padding: '10px 12px', fontSize: 13, lineHeight: 1.4, display: 'flex', gap: 10 }}>
-          <span className="dot" style={{ width: 8, height: 8, background: roleColor(a.role).c, marginTop: 5 }} />
+          <Icon name={roleIcon(a.role)} style={{ color: roleColor(a.role).c }} />
           <span>This will reduce your {a.role === 'Investment' ? 'investments' : 'savings'}: <b>{a.name} {fmt(ab)} → {fmt(ab - amt)}</b></span>
         </div>
       )}
       {q.mode !== 'income' && amt > 0 && amt > ab && (
         <div style={{ background: 'var(--warn-soft)', borderRadius: 12, padding: '10px 12px', fontSize: 13, lineHeight: 1.4, display: 'flex', gap: 10 }}>
-          <span className="dot" style={{ width: 8, height: 8, background: 'var(--warn)', marginTop: 5 }} />
+          <Icon name="alert" style={{ color: 'var(--warn-ink)' }} />
           <span>This is more than your {a.name} balance ({fmt(ab)}). You can still save it.</span>
         </div>
       )}
@@ -135,11 +139,15 @@ export function QuickAdd({ edit, preset }: { edit?: Txn; preset?: { mode: 'incom
           const c = chip(q.date === dt);
           return <button key={dt} onClick={() => set({ date: dt })} style={{ flex: 'none', border: `1px solid ${c.border}`, background: c.bg, color: c.fg, borderRadius: 10, padding: '8px 10px', fontSize: 13, cursor: 'pointer' }}>{label}</button>;
         })}
-        <input value={q.note} onChange={(e) => set({ note: e.target.value })} placeholder="Note (optional)" aria-label="Note" style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 10, padding: '8px 10px', fontSize: 13, outline: 'none' }} />
+        <label style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${oc.border}`, background: oc.bg, color: oc.fg, borderRadius: 10, padding: '0 10px', fontSize: 13, cursor: 'pointer' }}>
+          <span style={{ whiteSpace: 'nowrap' }}>{otherDay ? 'Date' : 'Other day'}</span>
+          <input type="date" value={q.date} max={today} aria-label="Pick a date" onChange={(e) => e.target.value && set({ date: e.target.value })} style={{ flex: 1, minWidth: 0, border: 0, background: 'none', color: 'inherit', padding: '7px 0', fontSize: 13, outline: 'none', colorScheme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light' }} />
+        </label>
       </div>
+      <input value={q.note} onChange={(e) => set({ note: e.target.value })} placeholder="Note (optional), e.g. lunch with team" aria-label="Note" style={{ border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 10, padding: '10px 12px', fontSize: 14, outline: 'none' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
         {['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', '⌫'].map((k) => (
-          <button key={k} aria-label={k === '⌫' ? 'Delete digit' : k} onClick={() => pressKey(k)} style={{ height: 50, border: 0, borderRadius: 14, background: 'var(--surface2)', fontSize: 22, fontWeight: 500, cursor: 'pointer' }}>{k}</button>
+          <button key={k} aria-label={k === '⌫' ? 'Delete last digit' : k} onClick={() => pressKey(k)} style={{ height: 50, border: 0, borderRadius: 14, background: 'var(--surface2)', fontSize: 22, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{k === '⌫' ? <Icon name="backspace" size={26} /> : k}</button>
         ))}
       </div>
       <button className="btn-ink" onClick={save} aria-disabled={!valid} style={{ height: 56, borderRadius: 18, fontWeight: 700, fontSize: 17, opacity: valid ? 1 : 0.4 }}>

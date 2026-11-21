@@ -3,16 +3,20 @@ import { useApp } from '../ctx';
 import { backupJson, download, parseBackup, transactionsCsv } from '../lib/backup';
 import { cycleFor, dayDiff } from '../lib/dates';
 import { fmt, uid } from '../lib/format';
-import { catChart, type Settings as S, type ThemePref } from '../lib/model';
+import { catBg, catFg, type Settings as S, type ThemePref } from '../lib/model';
 import { notifState, requestNotif, type NotifState } from '../lib/notify';
-import { divider, SectionLabel } from '../components/ui';
+import { CatGlyph, divider, SectionLabel } from '../components/ui';
+import { Icon, type IconName } from '../components/Icon';
 
 export const REMINDER_TIMES = ['19:00', '20:00', '21:00', '21:30', '22:00', '23:00'];
 
-function Row({ label, first, children }: { label: string; first?: boolean; children: ReactNode }) {
+function Row({ label, icon, first, children }: { label: string; icon: IconName; first?: boolean; children: ReactNode }) {
   return (
     <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderTop: first ? 'none' : '1px solid var(--line)' }}>
-      <span>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Icon name={icon} style={{ color: 'var(--ink3)' }} />
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -81,24 +85,25 @@ export function Settings() {
     <div className="screen">
       <div className="title" style={{ padding: '0 4px' }}>Settings</div>
       {lb.stale && (
-        <div style={{ background: 'var(--warn-soft)', border: '1px solid var(--line)', borderRadius: 18, padding: '14px 16px', fontSize: 14, lineHeight: 1.45 }}>
-          <b>Last backup: {lb.text}.</b> {st.lastBackup ? "It's been over 30 days." : ''} Export a backup so you don't lose your data.
+        <div style={{ background: 'var(--warn-soft)', border: '1px solid var(--line)', borderRadius: 18, padding: '14px 16px', fontSize: 14, lineHeight: 1.45, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <Icon name="alert" style={{ color: 'var(--warn-ink)', marginTop: 1 }} />
+          <span><b>Last backup: {lb.text}.</b> {st.lastBackup ? "It's been over 30 days." : ''} Export a backup so you don't lose your data.</span>
         </div>
       )}
 
-      <SectionLabel>Cycle</SectionLabel>
+      <SectionLabel icon="calendar">Cycle</SectionLabel>
       <div className="card" style={{ borderRadius: 18 }}>
-        <Row label="Payday" first>
+        <Row label="Payday" icon="calendar" first>
           <select className="select" value={String(st.payday)} onChange={(e) => { const p = Number(e.target.value); setS({ payday: p, lastCycleStart: cycleFor(today, p).s }); }}>
             {Array.from({ length: 28 }, (_, i) => <option key={i} value={i + 1}>Day {i + 1}</option>)}
           </select>
         </Row>
-        <Row label="Sweep leftover to">
+        <Row label="Sweep leftover to" icon="piggy">
           <select className="select" value={st.defSav || ''} onChange={(e) => setS({ defSav: e.target.value || null })} style={{ maxWidth: 170 }}>
             {d.savA.length ? d.savA.map((a) => <option key={a.id} value={a.id}>{a.name}</option>) : <option value="">No savings account</option>}
           </select>
         </Row>
-        <Row label="Daily reminder">
+        <Row label="Daily reminder" icon="bell">
           <select className="select" value={st.reminder || 'off'} onChange={(e) => setS({ reminder: e.target.value === 'off' ? null : e.target.value })}>
             <option value="off">Off</option>
             {REMINDER_TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -110,7 +115,10 @@ export function Settings() {
           </div>
         ) : (
           <div style={{ padding: '12px 16px 14px', borderTop: '1px solid var(--line)', fontSize: 13, color: 'var(--ink2)', lineHeight: 1.45 }}>
-            <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{notif === 'default' ? 'Notifications are off' : 'Notifications are blocked'}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+              <Icon name={notif === 'default' ? 'bell' : 'alert'} size={18} style={{ color: 'var(--warn-ink)' }} />
+              {notif === 'default' ? 'Notifications are off' : 'Notifications are blocked'}
+            </div>
             {notif === 'default'
               ? 'Allow notifications to get the daily reminder on your lock screen. Until then, reminders appear as a banner inside the app.'
               : notif === 'unsupported'
@@ -125,9 +133,9 @@ export function Settings() {
         )}
       </div>
 
-      <SectionLabel>Appearance</SectionLabel>
+      <SectionLabel icon="sliders">Appearance</SectionLabel>
       <div className="card" style={{ borderRadius: 18 }}>
-        <Row label="Theme" first>
+        <Row label="Theme" icon="sliders" first>
           <select className="select" value={st.theme} onChange={(e) => setS({ theme: e.target.value as ThemePref })}>
             <option value="system">Match device</option>
             <option value="light">Light</option>
@@ -136,11 +144,13 @@ export function Settings() {
         </Row>
       </div>
 
-      <SectionLabel>Categories</SectionLabel>
+      <SectionLabel icon="tag">Categories</SectionLabel>
       <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
         {data.cats.map((c, i) => (
           <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 16px', borderTop: divider(i), opacity: c.archived ? 0.5 : 1 }}>
-            <span className="dot" style={{ width: 10, height: 10, background: catChart(c.id) }} />
+            <span className="tile" style={{ width: 30, height: 30, borderRadius: 10, background: catBg(c.id), color: catFg(c.id) }}>
+              <CatGlyph cat={c} size={17} />
+            </span>
             <input value={c.name} aria-label="Category name" onChange={(e) => { const name = e.target.value; app.commit((x) => ({ ...x, cats: x.cats.map((y) => (y.id === c.id ? { ...y, name } : y)) })); }} style={{ flex: 1, minWidth: 0, border: 0, background: 'none', padding: '8px 0', outline: 'none' }} />
             <button className="link" onClick={() => app.commit((x) => ({ ...x, cats: x.cats.map((y) => (y.id === c.id ? { ...y, archived: !y.archived } : y)) }))} style={{ fontSize: 13, padding: 8 }}>
               {c.archived ? 'Restore' : 'Archive'}
@@ -153,10 +163,10 @@ export function Settings() {
         </div>
       </div>
 
-      <SectionLabel>Data · stored on this device</SectionLabel>
+      <SectionLabel icon="lock">Data stored on this device</SectionLabel>
       <div className="card" style={{ borderRadius: 18, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ fontSize: 14, color: 'var(--ink2)' }}>Last backup: <b style={{ color: lb.color }}>{lb.text}</b></div>
-        <button className="btn-ink" onClick={exportJSON} style={{ height: 48, borderRadius: 14 }}>Export backup (JSON)</button>
+        <button className="btn-ink row-btn" onClick={exportJSON} style={{ height: 48, borderRadius: 14, gap: 8 }}><Icon name="save" size={18} />Export backup (JSON)</button>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <button className="btn-line" onClick={exportCSV} style={{ height: 46, borderRadius: 14 }}>Export CSV</button>
           <button className="btn-line" onClick={() => { setImportError(null); fileRef.current?.click(); }} style={{ height: 46, borderRadius: 14 }}>Import backup</button>
@@ -167,14 +177,15 @@ export function Settings() {
             <b>Import failed.</b> {importError} Nothing was changed.
           </div>
         )}
-        <button onClick={() => app.openSheet({ kind: 'reset' })} style={{ height: 46, borderRadius: 14, border: '1px solid var(--line)', background: 'none', color: 'var(--expense)', fontWeight: 600, cursor: 'pointer', marginTop: 4 }}>
+        <button onClick={() => app.openSheet({ kind: 'reset' })} style={{ height: 46, borderRadius: 14, border: '1px solid var(--line)', background: 'none', color: 'var(--expense)', fontWeight: 600, cursor: 'pointer', marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Icon name="trash" size={18} />
           Reset all data
         </button>
       </div>
 
       {data.sweeps.length > 0 && (
         <>
-          <SectionLabel>Sweep history</SectionLabel>
+          <SectionLabel icon="piggy">Sweep history</SectionLabel>
           <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
             {data.sweeps.slice().reverse().map((s, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderTop: divider(i), fontSize: 14 }}>

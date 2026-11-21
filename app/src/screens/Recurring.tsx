@@ -1,8 +1,9 @@
 import { useApp } from '../ctx';
 import { dayDiff, nice } from '../lib/dates';
 import { fmt } from '../lib/format';
-import { acctOf } from '../lib/model';
-import { divider } from '../components/ui';
+import { acctOf, catBg, catFg, catOf } from '../lib/model';
+import { CatGlyph, divider } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { deco } from '../components/txn';
 
 export function Recurring() {
@@ -16,7 +17,7 @@ export function Recurring() {
     <div className="screen">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
         <div className="title">Recurring</div>
-        <button className="btn-line" onClick={() => app.openSheet({ kind: 'rule', rule: null })} style={{ borderRadius: 10, height: 36, padding: '0 14px' }}>+ New rule</button>
+        <button className="btn-line row-btn" onClick={() => app.openSheet({ kind: 'rule', rule: null })} style={{ borderRadius: 10, height: 36, padding: '0 14px' }}><Icon name="plus" size={16} />New rule</button>
       </div>
       <div className="card" style={{ borderRadius: 20, overflow: 'hidden' }}>
         {data.recurring.map((r, i) => {
@@ -25,6 +26,9 @@ export function Recurring() {
           const edit = () => app.openSheet({ kind: 'rule', rule: r });
           return (
             <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderTop: divider(i), opacity: r.paused ? 0.55 : 1 }}>
+              <span className="tile" style={{ width: 38, height: 38, borderRadius: 12, ...(r.type === 'income' ? { background: 'var(--income-soft)', color: 'var(--income)' } : { background: catBg(r.cat || 'other'), color: catFg(r.cat || 'other') }) }}>
+                {r.type === 'income' ? <Icon name={/interest|bunga/i.test(r.name) ? 'percent' : 'income'} /> : <CatGlyph cat={catOf(data, r.cat || 'other')} />}
+              </span>
               <div role="button" tabIndex={0} onClick={edit} onKeyDown={(e) => e.key === 'Enter' && edit()} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   <span style={{ fontWeight: 600 }}>{r.name}</span>
@@ -50,7 +54,7 @@ export function Recurring() {
           const v = deco(data, t);
           return (
             <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderTop: divider(i) }}>
-              <span style={{ width: 36, height: 36, flex: 'none', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, background: 'var(--surface2)', color: 'var(--ink2)' }}>↻</span>
+              <span className="tile" style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--surface2)', color: 'var(--ink2)' }}><Icon name="repeat" /></span>
               <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 500 }}>{v.title}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{v.dateStr} · {acctOf(data, t.acct).name}</div></div>
               <div style={{ fontWeight: 600, color: v.amtColor }}>{v.amtStr}</div>
             </div>

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useApp } from '../ctx';
 import { cycleFor, firstDueAfter } from '../lib/dates';
-import { dig, fmt, initials, onlyDigits, uid } from '../lib/format';
+import { dig, fmt, onlyDigits, uid } from '../lib/format';
 import { emptyData, type AcctType, type Data, type Role } from '../lib/model';
 import { requestNotif } from '../lib/notify';
-import { chipStyle, roleColor, roleStyle } from '../components/ui';
+import { acctIcon, chipStyle, roleColor, roleIcon, roleStyle, typeIcon } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { REMINDER_TIMES } from './Settings';
 
 interface ObAcct {
@@ -35,14 +36,14 @@ export function AccountForm({ onAdd, defaultRole, withTarget }: { onAdd: (a: ObA
       <input className="text-field" value={name} onChange={(e) => setName(e.target.value)} placeholder="Account name, e.g. BCA Salary" aria-label="Account name" style={{ fontSize: 15 }} />
       <div style={{ display: 'flex', gap: 6 }}>
         {(['Bank', 'E-wallet', 'Cash'] as const).map((x) => (
-          <button key={x} onClick={() => setType(x)} style={chipStyle(type === x, { flex: 1, borderRadius: 10, padding: '9px 0', fontSize: 14 })}>{x}</button>
+          <button key={x} onClick={() => setType(x)} style={chipStyle(type === x, { flex: 1, borderRadius: 10, padding: '9px 0', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 })}><Icon name={typeIcon(x)} size={17} />{x}</button>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
         {(['Salary', 'Savings', 'Investment'] as const).map((x) => {
           const c = roleStyle(role === x, x);
           return (
-            <button key={x} onClick={() => setRole(x)} style={{ flex: 1, border: `1px solid ${c.border}`, background: c.bg, color: c.fg, borderRadius: 10, padding: '9px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{x}</button>
+            <button key={x} onClick={() => setRole(x)} style={{ flex: 1, border: `1px solid ${c.border}`, background: c.bg, color: c.fg, borderRadius: 10, padding: '9px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, whiteSpace: 'nowrap' }}><Icon name={roleIcon(x)} size={17} />{x}</button>
           );
         })}
       </div>
@@ -56,7 +57,7 @@ export function AccountForm({ onAdd, defaultRole, withTarget }: { onAdd: (a: ObA
           <input value={dig(target)} onChange={(e) => setTarget(onlyDigits(e.target.value))} inputMode="numeric" placeholder="Optional" aria-label="Savings target" style={{ padding: '12px 6px', fontSize: 15 }} />
         </div>
       )}
-      <button onClick={add} style={{ border: '1px dashed var(--ink3)', background: 'none', borderRadius: 12, padding: 11, fontWeight: 600, cursor: 'pointer' }}>+ Add account</button>
+      <button className="row-btn" onClick={add} style={{ border: '1px dashed var(--ink3)', background: 'none', borderRadius: 12, padding: 11, fontWeight: 600, cursor: 'pointer' }}><Icon name="plus" size={18} />Add account</button>
     </div>
   );
 }
@@ -107,7 +108,7 @@ export function Onboarding() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 28 }}>
         {[1, 2, 3, 4].map((i) => <span key={i} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? 'var(--ink)' : 'var(--line)', display: 'block' }} />)}
       </div>
-      <div className="eyebrow" style={{ color: 'var(--ink3)', marginBottom: 10 }}>Step {step} of 4</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink3)', marginBottom: 10 }}>Step {step} of 4</div>
 
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
@@ -115,11 +116,11 @@ export function Onboarding() {
           <p style={{ margin: 0, color: 'var(--ink2)', fontSize: 16, lineHeight: 1.5 }}>See what's left of this month's pay, and know exactly how much savings you have after spending from it.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
             <div className="card" style={{ borderRadius: 18, padding: 16 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Your data stays on this device</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 600, marginBottom: 8 }}><span className="tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--salary-soft)', color: 'var(--salary)' }}><Icon name="lock" size={18} /></span>Your data stays on this device</div>
               <div style={{ color: 'var(--ink2)', fontSize: 14, lineHeight: 1.45 }}>No login, no cloud. Everything is stored in this browser only.</div>
             </div>
             <div style={{ background: 'var(--warn-soft)', border: '1px solid var(--line)', borderRadius: 18, padding: 16 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Back up regularly</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 600, marginBottom: 8 }}><span className="tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--surface)', color: 'var(--warn-ink)' }}><Icon name="save" size={18} /></span>Back up regularly</div>
               <div style={{ color: 'var(--ink2)', fontSize: 14, lineHeight: 1.45 }}>If you clear browser data, anything without a backup is gone. Export a backup file from Settings at least once a month.</div>
             </div>
           </div>
@@ -134,10 +135,10 @@ export function Onboarding() {
             const rc = roleColor(a.role);
             return (
               <div key={a.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, borderRadius: 14, padding: '12px 14px' }}>
-                <span style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flex: 'none', background: rc.soft, color: rc.c }}>{initials(a.name)}</span>
+                <span className="tile" style={{ width: 36, height: 36, borderRadius: 11, background: rc.soft, color: rc.c }}><Icon name={acctIcon(a)} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600 }}>{a.name}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{a.type} · {a.role}</div></div>
                 <div style={{ fontWeight: 600 }}>{fmt(a.bal)}</div>
-                <button aria-label={'Remove ' + a.name} onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))} style={{ border: 0, background: 'none', color: 'var(--ink3)', cursor: 'pointer', fontSize: 18, padding: '4px 6px' }}>×</button>
+                <button aria-label={'Remove ' + a.name} onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))} style={{ border: 0, background: 'none', color: 'var(--ink3)', cursor: 'pointer', padding: 6, display: 'flex' }}><Icon name="x" size={18} /></button>
               </div>
             );
           })}

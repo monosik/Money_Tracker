@@ -4,6 +4,7 @@ import { fmt, short } from '../lib/format';
 import { catChart, catOf } from '../lib/model';
 import { lastCycles } from '../lib/reports';
 import { changeLabel } from '../components/ui';
+import { Icon } from '../components/Icon';
 
 const N = 6;
 
@@ -40,9 +41,9 @@ export function Reports() {
     <div className="screen">
       <div className="title" style={{ padding: '0 4px' }}>Reports</div>
       <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, padding: 4 }}>
-        <button aria-label="Previous cycle" disabled={!canPrev} onClick={() => setOff(off - 1)} style={{ width: 44, height: 40, border: 0, background: 'none', fontSize: 20, cursor: canPrev ? 'pointer' : 'default', opacity: canPrev ? 1 : 0.25 }}>‹</button>
+        <button aria-label="Previous cycle" disabled={!canPrev} onClick={() => setOff(off - 1)} style={{ width: 44, height: 40, border: 0, background: 'none', cursor: canPrev ? 'pointer' : 'default', opacity: canPrev ? 1 : 0.25, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chev-l" /></button>
         <span style={{ fontWeight: 600 }}>{R.cyc.label}</span>
-        <button aria-label="Next cycle" disabled={!canNext} onClick={() => setOff(off + 1)} style={{ width: 44, height: 40, border: 0, background: 'none', fontSize: 20, cursor: canNext ? 'pointer' : 'default', opacity: canNext ? 1 : 0.25 }}>›</button>
+        <button aria-label="Next cycle" disabled={!canNext} onClick={() => setOff(off + 1)} style={{ width: 44, height: 40, border: 0, background: 'none', cursor: canNext ? 'pointer' : 'default', opacity: canNext ? 1 : 0.25, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chev-r" /></button>
       </div>
 
       {R.total === 0 ? (
@@ -71,11 +72,11 @@ export function Reports() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div className="card" style={{ borderRadius: 20, padding: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--ink3)' }}>Total spent</div>
+              <div className="label" style={{ gap: 6, fontSize: 13, fontWeight: 400, color: 'var(--ink3)' }}><Icon name="spend" size={16} />Total spent</div>
               <div style={{ fontSize: 19, fontWeight: 700, marginTop: 4 }}>{fmt(R.total)}</div>
             </div>
             <div style={{ background: 'var(--surface)', border: '1.5px dashed var(--ink3)', borderRadius: 20, padding: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--ink3)' }}>Unlogged spending</div>
+              <div className="label" style={{ gap: 6, fontSize: 13, fontWeight: 400, color: 'var(--ink3)' }}><Icon name="help" size={16} />Unlogged spending</div>
               <div style={{ fontSize: 19, fontWeight: 700, marginTop: 4 }}>{fmt(R.untracked)}</div>
             </div>
           </div>
@@ -86,8 +87,8 @@ export function Reports() {
               <div style={{ flex: 1, background: 'var(--savings)' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 13 }}>
-              <div><div style={{ color: 'var(--salary)', fontWeight: 600 }}>Salary</div><div>{fmt(R.total - R.fromSav)}</div></div>
-              <div style={{ textAlign: 'right' }}><div style={{ color: 'var(--savings)', fontWeight: 600 }}>Savings</div><div>{fmt(R.fromSav)}</div></div>
+              <div><div className="label" style={{ gap: 6, fontSize: 13, color: 'var(--salary)' }}><Icon name="briefcase" size={16} />Salary</div><div>{fmt(R.total - R.fromSav)}</div></div>
+              <div style={{ textAlign: 'right' }}><div className="label" style={{ gap: 6, fontSize: 13, justifyContent: 'flex-end', color: 'var(--savings)' }}><Icon name="piggy" size={16} />Savings</div><div>{fmt(R.fromSav)}</div></div>
             </div>
           </div>
         </>

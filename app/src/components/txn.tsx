@@ -1,12 +1,14 @@
 import type { CSSProperties } from 'react';
 import { nice } from '../lib/dates';
 import { fmt } from '../lib/format';
-import { roleColor } from './ui';
-import { acctOf, catBg, catFg, catOf, type Data, type Txn } from '../lib/model';
+import { acctOf, catBg, catFg, catOf, type Category, type Data, type Txn } from '../lib/model';
+import { Icon, type IconName } from './Icon';
+import { CatGlyph, catLabel, roleColor } from './ui';
 
 export interface TxnView {
   id: string;
-  icon: string;
+  /** A line icon, or the category (which may show its own emoji). */
+  icon: IconName | Category;
   iconBg: string;
   iconFg: string;
   iconBorder: string;
@@ -20,40 +22,37 @@ export interface TxnView {
   dateStr: string;
 }
 
-/** First visible character, so emoji category names like "🍜 Food" give "🍜" rather than half a character. */
-const firstGlyph = (s: string) => {
-  const Seg = (Intl as unknown as { Segmenter?: new () => { segment: (s: string) => Iterable<{ segment: string }> } }).Segmenter;
-  if (Seg) for (const g of new Seg().segment(s.trim())) return g.segment;
-  return Array.from(s.trim())[0] || '?';
-};
-
-/** How a transaction looks: expense (−), income (+), transfer (⇄), untracked (dashed ?). */
+/** How a transaction looks: expense (category), income, transfer, interest, value update, untracked (dashed ?). */
 export function deco(d: Data, t: Txn, viewAcct?: string): TxnView {
   const a = acctOf(d, t.acct);
   const r = { id: t.id, auto: !!t.auto, iconBorder: 'none', tag: null, dateStr: nice(t.date) };
   if (t.type === 'expense') {
     const c = catOf(d, t.cat);
-    return { ...r, icon: firstGlyph(c.name), iconBg: catBg(c.id), iconFg: catFg(c.id), title: t.note || c.name, sub: c.name + ' · ' + a.name, amtStr: '−' + fmt(t.amount), amtColor: 'var(--expense)', tag: a.role === 'Salary' ? null : { label: a.role, ...roleColor(a.role) } };
+    return { ...r, icon: c, iconBg: catBg(c.id), iconFg: catFg(c.id), title: t.note || catLabel(c.name), sub: catLabel(c.name) + ' · ' + a.name, amtStr: '−' + fmt(t.amount), amtColor: 'var(--expense)', tag: a.role === 'Salary' ? null : { label: a.role, ...roleColor(a.role) } };
   }
   if (t.type === 'income' && t.source === 'Interest')
-    return { ...r, icon: '%', iconBg: 'var(--income-soft)', iconFg: 'var(--income)', title: t.note || 'Interest', sub: 'Interest · ' + a.name, amtStr: '+' + fmt(t.amount), amtColor: 'var(--income)' };
+    return { ...r, icon: 'percent', iconBg: 'var(--income-soft)', iconFg: 'var(--income)', title: t.note || 'Interest', sub: 'Interest · ' + a.name, amtStr: '+' + fmt(t.amount), amtColor: 'var(--income)' };
   if (t.type === 'revalue')
-    return { ...r, icon: t.amount < 0 ? '↘' : '↗', iconBg: 'var(--invest-soft)', iconFg: 'var(--invest)', title: t.note || 'Value update', sub: 'Market change · ' + a.name, amtStr: (t.amount < 0 ? '' : '+') + fmt(t.amount), amtColor: t.amount < 0 ? 'var(--expense)' : 'var(--income)' };
+    return { ...r, icon: t.amount < 0 ? 'trend-down' : 'trend-up', iconBg: 'var(--invest-soft)', iconFg: 'var(--invest)', title: t.note || 'Value update', sub: 'Market change · ' + a.name, amtStr: (t.amount < 0 ? '' : '+') + fmt(t.amount), amtColor: t.amount < 0 ? 'var(--expense)' : 'var(--income)' };
   if (t.type === 'income')
-    return { ...r, icon: '+', iconBg: 'var(--income-soft)', iconFg: 'var(--income)', title: t.note || t.source || 'Income', sub: (t.source || 'Income') + ' · ' + a.name, amtStr: '+' + fmt(t.amount), amtColor: 'var(--income)' };
+    return { ...r, icon: 'income', iconBg: 'var(--income-soft)', iconFg: 'var(--income)', title: t.note || t.source || 'Income', sub: (t.source || 'Income') + ' · ' + a.name, amtStr: '+' + fmt(t.amount), amtColor: 'var(--income)' };
   if (t.type === 'transfer') {
     const incoming = viewAcct != null && t.to === viewAcct;
-    return { ...r, icon: '⇄', iconBg: 'var(--surface2)', iconFg: 'var(--ink2)', title: t.note || 'Transfer', sub: a.name + ' → ' + acctOf(d, t.to).name, amtStr: (incoming ? '+' : '') + fmt(t.amount), amtColor: incoming ? 'var(--income)' : 'var(--ink2)' };
+    return { ...r, icon: 'transfer', iconBg: 'var(--surface2)', iconFg: 'var(--ink2)', title: t.note || 'Transfer', sub: a.name + ' → ' + acctOf(d, t.to).name, amtStr: (incoming ? '+' : '') + fmt(t.amount), amtColor: incoming ? 'var(--income)' : 'var(--ink2)' };
   }
-  return { ...r, icon: '?', iconBg: 'transparent', iconFg: 'var(--ink2)', iconBorder: '1.5px dashed var(--ink3)', title: 'Untracked', sub: 'Reconciled · ' + a.name, amtStr: (t.amount < 0 ? '' : '+') + fmt(t.amount), amtColor: 'var(--ink2)' };
+  return { ...r, icon: 'help', iconBg: 'transparent', iconFg: 'var(--ink2)', iconBorder: '1.5px dashed var(--ink3)', title: 'Untracked', sub: 'Reconciled · ' + a.name, amtStr: (t.amount < 0 ? '' : '+') + fmt(t.amount), amtColor: 'var(--ink2)' };
 }
 
-export function TxnIcon({ v, size = 38, radius = 12, font = 15, showAuto = true }: { v: TxnView; size?: number; radius?: number; font?: number; showAuto?: boolean }) {
-  const st: CSSProperties = { width: size, height: size, borderRadius: radius, fontSize: font, background: v.iconBg, color: v.iconFg, border: v.iconBorder };
+export function TxnIcon({ v, size = 38, radius = 12, glyph = 20, showAuto = true }: { v: TxnView; size?: number; radius?: number; glyph?: number; showAuto?: boolean }) {
+  const st: CSSProperties = { width: size, height: size, borderRadius: radius, background: v.iconBg, color: v.iconFg, border: v.iconBorder };
   return (
     <span className="ticon" style={st}>
-      {v.icon}
-      {showAuto && v.auto && <span className="auto" title="Auto-logged">↻</span>}
+      {typeof v.icon === 'string' ? <Icon name={v.icon} size={glyph} /> : <CatGlyph cat={v.icon} size={glyph} />}
+      {showAuto && v.auto && (
+        <span className="auto" title="Auto-logged">
+          <Icon name="repeat" size={11} style={{ strokeWidth: 2.2 }} />
+        </span>
+      )}
     </span>
   );
 }

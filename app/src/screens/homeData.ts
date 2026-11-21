@@ -4,7 +4,7 @@ import { dayDiff } from '../lib/dates';
 import { fmt } from '../lib/format';
 import { acctOf } from '../lib/model';
 import { deco } from '../components/txn';
-import { changeLabel } from '../components/ui';
+import { acctIcon, changeLabel } from '../components/ui';
 
 /** Everything the mobile Home and the desktop Dashboard share. */
 export function homeData(app: App) {
@@ -67,7 +67,7 @@ export function homeData(app: App) {
     const sp = d.savSpentOf(a.id);
     const pct = targetPct(b, a.target);
     const interest = d.interestOf(a.id).year;
-    return { id: a.id, name: a.name, balStr: fmt(b), target: a.target, pct, pctStr: pct + '%', targetStr: a.target ? fmt(a.target) : '', spent: sp, spentStr: '−' + fmt(sp), interest, interestStr: '+' + fmt(interest), open: () => app.go('acct', { acctId: a.id }) };
+    return { id: a.id, name: a.name, icon: acctIcon(a), balStr: fmt(b), target: a.target, pct, pctStr: pct + '%', targetStr: a.target ? fmt(a.target) : '', spent: sp, spentStr: '−' + fmt(sp), interest, interestStr: '+' + fmt(interest), open: () => app.go('acct', { acctId: a.id }) };
   });
   const savInterestLine = d.savInterest ? `+${fmt(d.savInterest)} interest this cycle` : '';
 
@@ -76,7 +76,7 @@ export function homeData(app: App) {
   const investCards = d.invA.map((a) => {
     const g = d.growthOf(a.id);
     const ch = changeLabel(g.gain, g.startValue, fmt);
-    return { id: a.id, name: a.name, balStr: fmt(d.bal(a.id)), gain: g.gain, changeStr: ch.text, changeColor: ch.color, open: () => app.go('acct', { acctId: a.id }) };
+    return { id: a.id, name: a.name, icon: acctIcon(a), balStr: fmt(d.bal(a.id)), gain: g.gain, changeStr: ch.text, changeColor: ch.color, open: () => app.go('acct', { acctId: a.id }) };
   });
 
   const budgetTop = d.activeCats

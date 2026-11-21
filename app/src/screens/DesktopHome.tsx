@@ -1,6 +1,8 @@
 import { useApp } from '../ctx';
 import { fmt } from '../lib/format';
-import { Bar } from '../components/ui';
+import { Bar, CatGlyph, catLabel, Label } from '../components/ui';
+import { Icon } from '../components/Icon';
+import { catBg, catFg } from '../lib/model';
 import { TxnIcon } from '../components/txn';
 import { homeData } from './homeData';
 
@@ -13,14 +15,20 @@ export function DesktopHome() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-.02em' }}>Home</div>
-        <div className="mono" style={{ fontSize: 12, color: 'var(--ink3)' }}>{app.d.cyc.label}</div>
-        <button className="btn-ink" onClick={quickAdd} style={{ marginLeft: 'auto', height: 44, padding: '0 20px', borderRadius: 14 }}>+ Quick add</button>
+        <div className="label" style={{ gap: 6, fontSize: 13, fontWeight: 400, color: 'var(--ink3)' }}>
+          <Icon name="calendar" size={16} />
+          {app.d.cyc.label}
+        </div>
+        <button className="btn row-btn" onClick={quickAdd} style={{ marginLeft: 'auto', height: 44, padding: '0 20px', borderRadius: 14, gap: 8, background: 'var(--salary)', color: 'var(--on-accent)' }}>
+          <Icon name="plus" size={18} style={{ strokeWidth: 2.2 }} />
+          Quick add
+        </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(0,1fr)', gap: 18, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ background: h.hero.bg, color: 'var(--on-accent)', borderRadius: 24, padding: '26px 28px', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 20, alignItems: 'end' }}>
             <div>
-              <div className="eyebrow" style={{ opacity: 0.85 }}>Available this month</div>
+              <div style={{ opacity: 0.92 }}><Label icon="briefcase">Available this month</Label></div>
               <div style={{ fontSize: 46, fontWeight: 700, letterSpacing: '-.03em', margin: '6px 0 2px' }}>{h.hero.availStr}</div>
               <div style={{ fontSize: 14, opacity: 0.9 }}>{h.hero.sub}</div>
             </div>
@@ -29,11 +37,11 @@ export function DesktopHome() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             <div className="card" style={{ borderRadius: 22, padding: 20 }}>
-              <div style={{ fontWeight: 600, marginBottom: 16 }}>Budgets</div>
+              <div className="label" style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}><Icon name="target" style={{ color: 'var(--salary)' }} />Budgets</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {h.budgetTop.map((b) => (
                   <div key={b.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}><span>{b.name}</span><span style={{ color: b.statusColor }}>{b.pctStr}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="tile" style={{ width: 26, height: 26, borderRadius: 8, background: catBg(b.id), color: catFg(b.id) }}><CatGlyph cat={b} size={15} /></span>{catLabel(b.name)}</span><span style={{ color: b.statusColor }}>{b.pctStr}</span></div>
                     <Bar pct={b.barPct} color={b.barColor} />
                     <div style={{ fontSize: 12, color: 'var(--ink3)', marginTop: 5 }}>{fmt(b.spent)} of {fmt(b.budget!)}</div>
                   </div>
@@ -42,10 +50,10 @@ export function DesktopHome() {
               {!h.budgetTop.length && <div style={{ fontSize: 14, color: 'var(--ink2)' }}>No budgets set yet.</div>}
             </div>
             <div className="card" style={{ borderRadius: 22, padding: '20px 20px 8px' }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Recent</div>
+              <div className="label" style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}><Icon name="list" style={{ color: 'var(--salary)' }} />Recent</div>
               {h.recent.map((t) => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: '1px solid var(--line)' }}>
-                  <TxnIcon v={t} size={32} radius={10} font={13} showAuto={false} />
+                  <TxnIcon v={t} size={32} radius={10} glyph={18} showAuto={false} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="ellipsis" style={{ fontSize: 14, fontWeight: 500 }}>{t.title}</div>
                     <div className="ellipsis" style={{ fontSize: 12, color: 'var(--ink3)' }}>{t.sub}</div>
@@ -59,14 +67,14 @@ export function DesktopHome() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="card" style={{ borderRadius: 22, padding: 20 }}>
-            <div className="eyebrow" style={{ color: 'var(--savings)' }}>Total savings</div>
+            <Label icon="piggy" color="var(--savings)">Total savings</Label>
             <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 2px' }}>{fmt(app.d.savTotal)}</div>
             <div style={{ fontSize: 14, color: h.savSpentColor, marginBottom: h.savInterestLine ? 2 : 14 }}>{h.savSpentLine}</div>
             {h.savInterestLine && <div style={{ fontSize: 14, color: 'var(--income)', marginBottom: 14 }}>{h.savInterestLine}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {h.savingsCards.map((s) => (
                 <div key={s.id} role="button" tabIndex={0} onClick={s.open} onKeyDown={(e) => e.key === 'Enter' && s.open()} style={{ border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span style={{ color: 'var(--ink2)' }}>{s.name}</span><span style={{ fontWeight: 600 }}>{s.balStr}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 14 }}><span style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--ink2)', minWidth: 0 }}><span className="tile" style={{ width: 28, height: 28, borderRadius: 9, background: 'var(--savings-soft)', color: 'var(--savings)' }}><Icon name={s.icon} size={16} /></span>{s.name}</span><span style={{ fontWeight: 700 }}>{s.balStr}</span></div>
                   {s.target ? (
                     <>
                       <Bar pct={s.pct} color="var(--savings)" h={6} style={{ marginTop: 10 }} />
@@ -81,13 +89,13 @@ export function DesktopHome() {
           </div>
           {h.investCards.length > 0 && (
             <div className="card" style={{ borderRadius: 22, padding: 20 }}>
-              <div className="eyebrow" style={{ color: 'var(--invest)' }}>Investments</div>
+              <Label icon="invest" color="var(--invest)">Investments</Label>
               <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-.02em', margin: '4px 0 2px' }}>{fmt(app.d.invTotal)}</div>
               <div style={{ fontSize: 14, color: h.invLine.color, marginBottom: 14 }}>{h.invLine.text}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {h.investCards.map((s) => (
                   <div key={s.id} role="button" tabIndex={0} onClick={s.open} onKeyDown={(e) => e.key === 'Enter' && s.open()} style={{ border: '1px solid var(--line)', background: 'var(--bg)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span style={{ color: 'var(--ink2)' }}>{s.name}</span><span style={{ fontWeight: 600 }}>{s.balStr}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 14 }}><span style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--ink2)', minWidth: 0 }}><span className="tile" style={{ width: 28, height: 28, borderRadius: 9, background: 'var(--invest-soft)', color: 'var(--invest)' }}><Icon name={s.icon} size={16} /></span>{s.name}</span><span style={{ fontWeight: 700 }}>{s.balStr}</span></div>
                     <div style={{ fontSize: 12, color: s.changeColor, marginTop: 4 }}>{s.gain ? s.changeStr + ' this cycle' : 'No change this cycle'}</div>
                   </div>
                 ))}
@@ -96,7 +104,7 @@ export function DesktopHome() {
           )}
           {h.pending && (
             <div style={{ background: 'var(--savings-soft)', border: '1px solid var(--line)', borderRadius: 22, padding: 18 }}>
-              <div className="eyebrow" style={{ color: 'var(--savings)', marginBottom: 6 }}>Month-end sweep</div>
+              <div style={{ marginBottom: 8 }}><Label icon="piggy" color="var(--savings)" size={13}>Month-end sweep</Label></div>
               <div style={{ fontWeight: 600, lineHeight: 1.35 }}>Move {h.pending.amountStr} to {h.pending.toName}.</div>
               <div style={{ color: 'var(--ink2)', fontSize: 14, margin: '2px 0 12px' }}>Did you transfer it in your bank app?</div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -112,7 +120,7 @@ export function DesktopHome() {
           )}
           {h.showNothing && (
             <div className="card" style={{ borderRadius: 22, padding: 18 }}>
-              <div style={{ fontWeight: 600, marginBottom: 10 }}>Nothing logged today. Did you spend anything?</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontWeight: 600, marginBottom: 10 }}><span className="tile" style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--warn-soft)', color: 'var(--warn-ink)' }}><Icon name="bell" /></span>Nothing logged today. Did you spend anything?</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-ink" onClick={quickAdd} style={{ flex: 1, height: 40, borderRadius: 12 }}>Quick add</button>
                 <button className="btn-line" onClick={h.onNoSpend} style={{ flex: 1, height: 40, borderRadius: 12 }}>No spending today</button>

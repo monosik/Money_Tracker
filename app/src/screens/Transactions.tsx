@@ -4,6 +4,7 @@ import { addDays, dayDiff, DOW, nice, parse } from '../lib/dates';
 import { fmt } from '../lib/format';
 import type { Txn } from '../lib/model';
 import { chipStyle } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { deco, TxnBody } from '../components/txn';
 
 const TYPES = [
@@ -51,7 +52,7 @@ export function Transactions() {
   return (
     <div className="screen" style={{ gap: 12 }}>
       <div className="title" style={{ padding: '0 4px' }}>Transactions</div>
-      <div className="hscroll" style={{ gap: 6 }}>
+      <div className="hscroll" data-drag="1" style={{ gap: 6 }}>
         {TYPES.map((o) => (
           <button key={o.value} onClick={() => setF({ type: o.value })} style={chipStyle(o.value === F.type, { flex: 'none', borderRadius: 999, padding: '8px 14px', fontSize: 14 })}>
             {o.label}
@@ -93,8 +94,8 @@ export function Transactions() {
                 return (
                   <div key={t.id} style={{ position: 'relative', borderTop: i ? '1px solid var(--line)' : 'none' }}>
                     <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, display: 'flex' }}>
-                      {canEdit && <button className="btn" tabIndex={on ? 0 : -1} onClick={() => { setSwiped(null); app.openSheet({ kind: 'qa', edit: t }); }} style={{ width: 74, background: 'var(--surface2)' }}>Edit</button>}
-                      <button className="btn" tabIndex={on ? 0 : -1} onClick={() => del(t)} style={{ width: 74, background: 'var(--expense)', color: 'var(--on-accent)' }}>Delete</button>
+                      {canEdit && <button className="btn" tabIndex={on ? 0 : -1} onClick={() => { setSwiped(null); app.openSheet({ kind: 'qa', edit: t }); }} style={{ width: 74, background: 'var(--surface2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 13 }}><Icon name="pencil" size={18} />Edit</button>}
+                      <button className="btn" tabIndex={on ? 0 : -1} onClick={() => del(t)} style={{ width: 74, background: 'var(--expense)', color: 'var(--on-accent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 13 }}><Icon name="trash" size={18} />Delete</button>
                     </div>
                     <div
                       role="button"

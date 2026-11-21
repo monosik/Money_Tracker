@@ -4,6 +4,7 @@ import { firstDueAfter } from '../lib/dates';
 import { dig, fmt, onlyDigits, ordinal, uid } from '../lib/format';
 import { acctOf, emptyData, type Rule } from '../lib/model';
 import { Seg } from '../components/ui';
+import { Icon, type IconName } from '../components/Icon';
 import { AccountForm } from '../screens/Onboarding';
 import { QuickAdd } from './QuickAdd';
 
@@ -35,13 +36,16 @@ export function SheetHost() {
 
 function More() {
   const app = useApp();
-  const items: [string, Screen, string][] = [['Budgets', 'budgets', 'Monthly limits'], ['Recurring', 'recurring', 'Bills & salary'], ['Settings', 'settings', 'Backup, payday']];
+  const items: [string, Screen, IconName][] = [['Budgets', 'budgets', 'target'], ['Recurring', 'recurring', 'repeat'], ['Settings', 'settings', 'sliders']];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 6 }}>
-      {items.map(([label, id, hint]) => (
-        <button key={id} onClick={() => app.go(id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 58, padding: '0 18px', borderRadius: 16, border: '1px solid var(--line)', background: 'var(--bg)', fontSize: 16, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-          <span>{label}</span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--ink3)' }}>{hint}</span>
+      {items.map(([label, id, icon]) => (
+        <button key={id} onClick={() => app.go(id)} style={{ display: 'flex', alignItems: 'center', gap: 14, height: 64, padding: '0 16px', borderRadius: 16, border: '1px solid var(--line)', background: 'var(--bg)', fontSize: 16, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+          <span className="tile" style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--salary-soft)', color: 'var(--salary)' }}>
+            <Icon name={icon} />
+          </span>
+          <span style={{ flex: 1 }}>{label}</span>
+          <Icon name="chev-r" size={18} style={{ color: 'var(--ink3)' }} />
         </button>
       ))}
     </div>

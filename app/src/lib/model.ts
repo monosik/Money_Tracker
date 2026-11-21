@@ -170,6 +170,6 @@ export const primarySalary = (d: Data) => d.accounts.find((a) => a.role === 'Sal
 const HUES: Record<string, number> = { food: 55, transport: 235, bills: 295, shopping: 345, entertainment: 185, health: 135, other: 95 };
 const hueOf = (id: string) =>
   HUES[id] != null ? HUES[id] : [...String(id)].reduce((h, c) => h + c.charCodeAt(0) * 37, 0) % 360;
-export const catFg = (id: string) => `oklch(0.56 0.12 ${hueOf(id)})`;
-export const catChart = (id: string) => `oklch(0.7 0.12 ${hueOf(id)})`;
-export const catBg = (id: string) => `oklch(0.7 0.12 ${hueOf(id)} / 0.18)`;
+export const catFg = (id: string) => `oklch(var(--cat-l) 0.1 ${hueOf(id)})`;
+export const catChart = (id: string) => `oklch(0.7 0.1 ${hueOf(id)})`;
+export const catBg = (id: string) => `oklch(0.7 0.1 ${hueOf(id)} / 0.2)`;

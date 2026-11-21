@@ -1,6 +1,6 @@
 # Money Tracker
 
-Track spending from your monthly salary and your savings separately. Built from the Claude Design handoff in `../project/Money Tracker.dc.html`.
+Track spending from your monthly salary and your savings separately. Built from the Claude Design handoff in `../project/Money Tracker.dc.html`; the current look (warm palette, Plus Jakarta Sans, line icons) follows `../project/Money Tracker v2.html`.
 
 React + Vite + TypeScript as an installable PWA. Single user, no login: data lives in this browser's `localStorage`. Use Settings › Export backup to keep a copy.
 

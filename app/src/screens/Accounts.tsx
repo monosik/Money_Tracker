@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useApp } from '../ctx';
 import { targetPct } from '../lib/derive';
 import { addDays, cycleFor, dayDiff } from '../lib/dates';
-import { dig, fmt, initials, onlyDigits } from '../lib/format';
+import { dig, fmt, onlyDigits } from '../lib/format';
 import { balanceOf, type Account, type Role } from '../lib/model';
-import { Bar, changeLabel, divider, roleColor } from '../components/ui';
+import { acctIcon, Bar, changeLabel, divider, Label, roleColor, roleIcon } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { deco, TxnIcon } from '../components/txn';
 
 const checked = (a: Account, today: string) => {
@@ -16,17 +17,22 @@ export function Accounts() {
   const app = useApp();
   const { d, today } = app;
   const open = (a: Account) => app.go('acct', { acctId: a.id });
-  const badge = (role: Role) => ({ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flex: 'none', background: roleColor(role).soft, color: roleColor(role).c }) as const;
+  const badge = (a: Account) => (
+    <span className="tile" style={{ width: 40, height: 40, borderRadius: 12, background: roleColor(a.role).soft, color: roleColor(a.role).c }}>
+      <Icon name={acctIcon(a)} size={22} />
+    </span>
+  );
+  const group = (role: Role, label: string) => <Label icon={roleIcon(role)} color={roleColor(role).c} size={14}>{label}</Label>;
 
   return (
     <div className="screen">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
         <div className="title">Accounts</div>
-        <button className="btn-line" onClick={() => app.openSheet({ kind: 'account' })} style={{ borderRadius: 10, height: 36, padding: '0 14px' }}>+ Add account</button>
+        <button className="btn-line row-btn" onClick={() => app.openSheet({ kind: 'account' })} style={{ borderRadius: 10, height: 36, padding: '0 14px' }}><Icon name="plus" size={16} />Add account</button>
       </div>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: 13 }}>
-          <span className="eyebrow" style={{ color: 'var(--salary)' }}>Salary</span>
+          {group('Salary', 'Salary')}
           <span style={{ color: 'var(--ink2)' }}>{fmt(d.salBal)}</span>
         </div>
         <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
@@ -34,7 +40,7 @@ export function Accounts() {
             const b = d.bal(a.id);
             return (
               <div key={a.id} role="button" tabIndex={0} onClick={() => open(a)} onKeyDown={(e) => e.key === 'Enter' && open(a)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderTop: divider(i), cursor: 'pointer' }}>
-                <span style={badge('Salary')}>{initials(a.name)}</span>
+                {badge(a)}
                 <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600 }}>{a.name}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{a.type} · checked {checked(a, today)}</div></div>
                 <div style={{ fontWeight: 600, color: b < 0 ? 'var(--expense)' : 'var(--ink)' }}>{fmt(b)}</div>
               </div>
@@ -44,7 +50,7 @@ export function Accounts() {
       </div>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: 13 }}>
-          <span className="eyebrow" style={{ color: 'var(--savings)' }}>Savings</span>
+          {group('Savings', 'Savings')}
           <span style={{ color: 'var(--ink2)' }}>{fmt(d.savTotal)}</span>
         </div>
         <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
@@ -54,7 +60,7 @@ export function Accounts() {
             return (
               <div key={a.id} role="button" tabIndex={0} onClick={() => open(a)} onKeyDown={(e) => e.key === 'Enter' && open(a)} style={{ padding: 14, borderTop: divider(i), cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={badge('Savings')}>{initials(a.name)}</span>
+                  {badge(a)}
                   <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600 }}>{a.name}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{a.type} · checked {checked(a, today)}</div></div>
                   <div style={{ fontWeight: 600 }}>{fmt(b)}</div>
                 </div>
@@ -73,7 +79,7 @@ export function Accounts() {
       {d.invA.length > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: 13 }}>
-            <span className="eyebrow" style={{ color: 'var(--invest)' }}>Investments</span>
+            {group('Investment', 'Investments')}
             <span style={{ color: 'var(--ink2)' }}>{fmt(d.invTotal)}</span>
           </div>
           <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
@@ -82,7 +88,7 @@ export function Accounts() {
               const ch = changeLabel(g.gain, g.startValue, fmt);
               return (
                 <div key={a.id} role="button" tabIndex={0} onClick={() => open(a)} onKeyDown={(e) => e.key === 'Enter' && open(a)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderTop: divider(i), cursor: 'pointer' }}>
-                  <span style={badge('Investment')}>{initials(a.name)}</span>
+                  {badge(a)}
                   <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600 }}>{a.name}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{a.type} · updated {checked(a, today)}</div></div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 600 }}>{fmt(d.bal(a.id))}</div>
@@ -132,13 +138,20 @@ export function AccountDetail() {
 
   return (
     <div className="screen" style={{ paddingTop: 4 }}>
-      <button className="link" onClick={() => app.go('accounts')} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '6px 4px' }}>‹ Accounts</button>
+      <button className="link" onClick={() => app.go('accounts')} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '6px 4px', display: 'flex', alignItems: 'center', gap: 2 }}><Icon name="chev-l" />Accounts</button>
       <div className="card" style={{ borderRadius: 24, padding: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="eyebrow" style={{ color: rc.c }}>{da.role}</span>
-          <span style={{ fontSize: 12, color: 'var(--ink3)' }}>· {da.type}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <span className="tile" style={{ width: 52, height: 52, borderRadius: 16, background: rc.soft, color: rc.c }}>
+            <Icon name={acctIcon(da)} size={28} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{da.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginTop: 2 }}>
+              <span style={{ fontWeight: 600, color: rc.c }}>{da.role}</span>
+              <span style={{ color: 'var(--ink3)' }}>· {da.type}</span>
+            </div>
+          </div>
         </div>
-        <div style={{ fontSize: 20, fontWeight: 600, marginTop: 6 }}>{da.name}</div>
         <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-.03em', margin: '6px 0 4px' }}>{fmt(b)}</div>
         {isSav && da.target && (
           <>
@@ -176,7 +189,7 @@ export function AccountDetail() {
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
           <span style={{ fontSize: 13, color: 'var(--ink3)' }}>Last {isInv ? 'updated' : 'reconciled'} {lr === 0 ? 'today' : lr === 1 ? 'yesterday' : lr + ' days ago'}</span>
-          <button className="btn-ink" onClick={() => app.openSheet({ kind: 'recon', acct: da.id })} style={{ borderRadius: 12, height: 42, padding: '0 18px' }}>{isInv ? 'Update value' : 'Reconcile'}</button>
+          <button className="btn-ink" onClick={() => app.openSheet({ kind: 'recon', acct: da.id })} style={{ borderRadius: 12, height: 42, padding: '0 18px', display: 'flex', alignItems: 'center', gap: 8 }}><Icon name={isInv ? 'trend-up' : 'scale'} size={18} />{isInv ? 'Update value' : 'Reconcile'}</button>
         </div>
       </div>
       {isInv && (
@@ -199,7 +212,7 @@ export function AccountDetail() {
       <div className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
         {items.map((t, i) => (
           <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderTop: divider(i) }}>
-            <TxnIcon v={t} size={36} radius={11} font={14} showAuto={false} />
+            <TxnIcon v={t} size={36} radius={11} showAuto={false} />
             <div style={{ flex: 1, minWidth: 0 }}><div className="ellipsis" style={{ fontWeight: 500 }}>{t.title}</div><div style={{ fontSize: 13, color: 'var(--ink3)' }}>{t.dateStr}</div></div>
             <div style={{ fontWeight: 600, color: t.amtColor, whiteSpace: 'nowrap' }}>{t.amtStr}</div>
           </div>

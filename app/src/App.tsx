@@ -16,6 +16,7 @@ import { Reports } from './screens/Reports';
 import { lastBackupInfo, Settings } from './screens/Settings';
 import { Transactions } from './screens/Transactions';
 import { SheetHost } from './sheets/Sheets';
+import { Icon, IconSprite, type IconName } from './components/Icon';
 
 /** Local date, refreshed when the app regains focus and once a minute (catches midnight). */
 function useToday() {
@@ -45,8 +46,47 @@ function useMedia(q: string) {
   return m;
 }
 
-const NAV: [string, Screen | 'more'][] = [['Home', 'home'], ['Transactions', 'txns'], ['Reports', 'reports'], ['Accounts', 'accounts'], ['More', 'more']];
-const DESK_NAV: [string, Screen][] = [['Home', 'home'], ['Transactions', 'txns'], ['Reports', 'reports'], ['Accounts', 'accounts'], ['Budgets', 'budgets'], ['Recurring', 'recurring'], ['Settings', 'settings']];
+const NAV: [string, Screen | 'more', IconName][] = [['Home', 'home', 'home'], ['Transactions', 'txns', 'list'], ['Reports', 'reports', 'chart'], ['Accounts', 'accounts', 'wallet'], ['More', 'more', 'grid']];
+const DESK_NAV: [string, Screen, IconName][] = [['Home', 'home', 'home'], ['Transactions', 'txns', 'list'], ['Reports', 'reports', 'chart'], ['Accounts', 'accounts', 'wallet'], ['Budgets', 'budgets', 'target'], ['Recurring', 'recurring', 'repeat'], ['Settings', 'settings', 'sliders']];
+
+/** Lets a mouse drag horizontal rows marked data-drag; a drag doesn't count as a click. */
+function useDragScroll() {
+  useEffect(() => {
+    let el: HTMLElement | null = null;
+    let sx = 0;
+    let sl = 0;
+    let moved = false;
+    const down = (e: PointerEvent) => {
+      if (e.pointerType === 'touch' || e.button > 0) return;
+      const t = (e.target as Element | null)?.closest?.('[data-drag]') as HTMLElement | null;
+      el = t && t.scrollWidth > t.clientWidth ? t : null;
+      if (el) { sx = e.clientX; sl = el.scrollLeft; moved = false; }
+    };
+    const move = (e: PointerEvent) => {
+      if (!el) return;
+      const dx = e.clientX - sx;
+      if (!moved && Math.abs(dx) > 5) { moved = true; el.classList.add('dragging'); }
+      if (moved) el.scrollLeft = sl - dx;
+    };
+    const up = () => {
+      if (el && moved) {
+        el.classList.remove('dragging');
+        const stop = (ev: Event) => { ev.stopPropagation(); ev.preventDefault(); };
+        window.addEventListener('click', stop, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', stop, true), 0);
+      }
+      el = null;
+    };
+    window.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => {
+      window.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+  }, []);
+}
 
 export function App() {
   const data = useData();
@@ -60,6 +100,7 @@ export function App() {
   const [toastState, setToast] = useState<{ msg: string; undo?: Data } | null>(null);
   const toastTimer = useRef<number>();
 
+  useDragScroll();
   const screen: Screen = !data.onboarded ? 'onboarding' : screenState === 'onboarding' ? 'home' : screenState;
 
   // Log due recurring items and create month-end sweeps whenever data or the date changes.
@@ -165,20 +206,25 @@ export function App() {
     </div>
   );
   const fab = (
-    <button className="fab" aria-label="Quick add" onClick={() => openSheet({ kind: 'qa' })}>+</button>
+    <button className="fab" aria-label="Quick add" onClick={() => openSheet({ kind: 'qa' })}><Icon name="plus" size={28} style={{ strokeWidth: 2.2 }} /></button>
   );
 
   if (isDesktop && screen !== 'onboarding') {
     const active = screen === 'acct' ? 'accounts' : screen;
     return (
       <AppCtx.Provider value={app}>
+        <IconSprite />
         <div className="desk">
           <nav className="desk-side" aria-label="Main">
-            <div style={{ fontWeight: 700, fontSize: 17, padding: '0 10px 20px' }}>Money Tracker</div>
-            {DESK_NAV.map(([label, id]) => {
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800, fontSize: 17, padding: '0 10px 20px' }}>
+              <span className="tile" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--salary)', color: 'var(--on-accent)' }}><Icon name="wallet" /></span>
+              Money Tracker
+            </div>
+            {DESK_NAV.map(([label, id, icon]) => {
               const on = id === active;
               return (
                 <button key={id} aria-current={on ? 'page' : undefined} onClick={() => go(id)} style={{ background: on ? 'var(--surface2)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink2)', fontWeight: on ? 600 : 500 }}>
+                  <Icon name={icon} />
                   {label}
                 </button>
               );
@@ -201,17 +247,20 @@ export function App() {
   const activeNav = screen === 'acct' ? 'accounts' : ['budgets', 'recurring', 'settings'].includes(screen) ? 'more' : screen;
   return (
     <AppCtx.Provider value={app}>
+        <IconSprite />
       <div className="shell">
         <main className={'content' + (screen === 'onboarding' ? ' onboarding' : '')}>{body}</main>
         {screen !== 'onboarding' && (
           <>
             {!sheet && <div className="fab-wrap">{fab}</div>}
             <nav className="nav" aria-label="Main">
-              {NAV.map(([label, id]) => {
+              {NAV.map(([label, id, icon]) => {
                 const on = id === activeNav;
                 return (
-                  <button key={id} aria-current={on ? 'page' : undefined} onClick={() => (id === 'more' ? openSheet({ kind: 'more' }) : go(id))} style={{ color: on ? 'var(--ink)' : 'var(--ink3)', fontWeight: on ? 600 : 500 }}>
-                    <span style={{ background: on ? 'var(--ink)' : 'transparent' }} />
+                  <button key={id} aria-current={on ? 'page' : undefined} onClick={() => (id === 'more' ? openSheet({ kind: 'more' }) : go(id))} style={{ color: on ? 'var(--ink)' : 'var(--ink3)', fontWeight: on ? 700 : 500 }}>
+                    <span style={{ background: on ? 'var(--salary-soft)' : 'transparent', color: on ? 'var(--salary)' : 'var(--ink2)' }}>
+                      <Icon name={icon} />
+                    </span>
                     {label}
                   </button>
                 );
